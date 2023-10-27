@@ -16,6 +16,7 @@ func TestBitmap(t *testing.T) {
 	bm.Set(456)
 
 	t.Log(bm.String())
+	assert.Equal(t, 5, bm.Ones())
 	assert.True(t, bm.Get(0) == true)
 	assert.True(t, bm.Get(1) == true)
 	assert.True(t, bm.Get(12) == true)
@@ -29,6 +30,7 @@ func TestBitmap(t *testing.T) {
 	bm.Unset(12)
 	bm.Unset(74)
 	t.Log(bm.String())
+	assert.Equal(t, 1, bm.Ones())
 	assert.True(t, bm.Get(0) == false)
 	assert.True(t, bm.Get(1) == false)
 	assert.True(t, bm.Get(12) == false)

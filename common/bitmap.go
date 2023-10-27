@@ -34,7 +34,10 @@ func (b *Bitmap) Set(pos int) error {
 	if pos >= len(b.arr)<<3 {
 		b.arr = append(b.arr, make([]byte, ((pos>>3)+1)-len(b.arr))...)
 	}
-	b.arr[pos>>3] |= 1 << uint(pos&0x7)
+	if b.arr[pos>>3]&(1<<uint(pos&0x7)) == 0 {
+		b.ones++
+		b.arr[pos>>3] |= 1 << uint(pos&0x7)
+	}
 	return nil
 }
 
@@ -42,7 +45,10 @@ func (b *Bitmap) Unset(pos int) {
 	if pos < 0 || pos >= len(b.arr)<<3 {
 		return
 	}
-	b.arr[pos>>3] &= ^(1 << uint(pos&0x7))
+	if b.arr[pos>>3]&(1<<uint(pos&0x7)) != 0 {
+		b.ones--
+		b.arr[pos>>3] &= ^(1 << uint(pos&0x7))
+	}
 }
 
 func (b *Bitmap) Get(pos int) bool {
@@ -131,19 +137,15 @@ func (b *Bitmap) String() string {
 	sb.WriteString(strconv.Itoa(b.Ones()))
 	sb.WriteString(") [")
 
-	maxPrintLen := 32
-	for i := 0; i < len(b.arr); i++ {
-		sb.WriteString(strconv.Itoa(int(b.arr[i])))
-		if i < len(b.arr)-1 {
-			sb.WriteString(",")
+	for i := 0; i < 32; i++ {
+		val := "0"
+		if b.Get(i) {
+			val = "1"
 		}
-
-		if i > maxPrintLen {
-			sb.WriteString("...")
-			break
-		}
+		sb.WriteString(val)
+		sb.WriteString(" ")
 	}
-	sb.WriteString("]")
+	sb.WriteString("...]")
 	return sb.String()
 }
 
@@ -165,13 +167,13 @@ func (b *Bitmap) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements json.Unmarshaler interface.
 func (b *Bitmap) UnmarshalJSON(data []byte) error {
-	alias := &alias{}
-	if err := json.Unmarshal(data, alias); err != nil {
+	a := &alias{}
+	if err := json.Unmarshal(data, a); err != nil {
 		return err
 	}
 	// 将公开表示的值复制到Bitmap对象
-	b.arr = alias.Arr
-	b.ones = alias.Ones
-	b.capacity = alias.Capacity
+	b.arr = a.Arr
+	b.ones = a.Ones
+	b.capacity = a.Capacity
 	return nil
 }
