@@ -18,3 +18,12 @@ func Err(rets ...any) error {
 	}
 	return nil
 }
+
+func ErrGroup(err ...error) (int, error) {
+	for i, e := range err {
+		if e != nil {
+			return i, e
+		}
+	}
+	return -1, nil
+}
