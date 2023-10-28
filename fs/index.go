@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"mini-container/common"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"syscall"
 )
@@ -48,7 +49,7 @@ func CreateInstanceDir(name string) error {
 }
 
 func DeleteInstanceDir(name string) error {
-	return common.Err(common.ErrGroupThrough(
+	return common.Err(common.ErrGroup(
 		os.RemoveAll(filepath.Join(InstanceMountDir, name)),
 		os.RemoveAll(filepath.Join(InstanceWorkDir, name)),
 		os.RemoveAll(filepath.Join(InstanceCOWDir, name)),
@@ -75,10 +76,16 @@ func UnionMountForInstance(name, imageDir string) error {
 // UnionUnmountForInstance 取消联合挂载
 // 注意：取消挂载后，你需要调用DeleteInstanceDir删除实例目录
 func UnionUnmountForInstance(name string) error {
-	return common.Err(common.ErrGroupThrough(
-		syscall.Unmount(filepath.Join(InstanceMountDir, name), 0),
-		syscall.Unmount(filepath.Join(InstanceWorkDir, name), 0),
-		syscall.Unmount(filepath.Join(InstanceCOWDir, name), 0),
+	//return common.Err(common.ErrGroup(
+	//	syscall.Unmount(filepath.Join(InstanceMountDir, name), 0),
+	//	syscall.Unmount(filepath.Join(InstanceWorkDir, name), 0),
+	//	syscall.Unmount(filepath.Join(InstanceCOWDir, name), 0),
+	//))
+
+	return common.Err(common.ErrGroup(
+		common.Err(exec.Command("umount", filepath.Join(InstanceMountDir, name)).CombinedOutput()),
+		common.Err(exec.Command("umount", filepath.Join(InstanceWorkDir, name)).CombinedOutput()),
+		common.Err(exec.Command("umount", filepath.Join(InstanceCOWDir, name)).CombinedOutput()),
 	))
 }
 

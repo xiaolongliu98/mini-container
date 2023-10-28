@@ -11,8 +11,8 @@ func Must(err ...error) {
 }
 
 func Err(rets ...any) error {
-	for _, ret := range rets {
-		if err, ok := ret.(error); ok {
+	for i := len(rets) - 1; i >= 0; i-- {
+		if err, ok := rets[i].(error); ok {
 			return err
 		}
 	}
@@ -28,16 +28,19 @@ func ErrGroup(err ...error) (int, error) {
 	return -1, nil
 }
 
-func ErrGroupThrough(err ...error) (int, error) {
+func ErrGroupCount(err ...error) (int, error) {
 	var targetErr error = nil
-	var idx int = -1
+	var count int = -1
 
-	for i, e := range err {
-		if e != nil && idx == -1 {
+	for _, e := range err {
+		if e != nil {
+			count++
+		}
+
+		if e != nil && targetErr == nil {
 			targetErr = e
-			idx = i
 		}
 	}
 
-	return idx, targetErr
+	return count, targetErr
 }
