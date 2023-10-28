@@ -85,7 +85,7 @@ func parent() {
 	}
 
 	// 删除操作
-	if i, err := common.ErrGroup(
+	if i, err := common.ErrGroupThrough(
 		fs.UnionUnmountForInstance(containerName),
 		fs.DeleteInstanceDir(containerName),
 		// TODO 清空Cgroups目录

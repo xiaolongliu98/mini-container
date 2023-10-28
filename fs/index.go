@@ -48,7 +48,7 @@ func CreateInstanceDir(name string) error {
 }
 
 func DeleteInstanceDir(name string) error {
-	return common.Err(common.ErrGroup(
+	return common.Err(common.ErrGroupThrough(
 		os.RemoveAll(filepath.Join(InstanceMountDir, name)),
 		os.RemoveAll(filepath.Join(InstanceWorkDir, name)),
 		os.RemoveAll(filepath.Join(InstanceCOWDir, name)),
@@ -75,7 +75,7 @@ func UnionMountForInstance(name, imageDir string) error {
 // UnionUnmountForInstance 取消联合挂载
 // 注意：取消挂载后，你需要调用DeleteInstanceDir删除实例目录
 func UnionUnmountForInstance(name string) error {
-	return common.Err(common.ErrGroup(
+	return common.Err(common.ErrGroupThrough(
 		syscall.Unmount(filepath.Join(InstanceMountDir, name), 0),
 		syscall.Unmount(filepath.Join(InstanceWorkDir, name), 0),
 		syscall.Unmount(filepath.Join(InstanceCOWDir, name), 0),

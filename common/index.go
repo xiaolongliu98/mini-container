@@ -27,3 +27,17 @@ func ErrGroup(err ...error) (int, error) {
 	}
 	return -1, nil
 }
+
+func ErrGroupThrough(err ...error) (int, error) {
+	var targetErr error = nil
+	var idx int = -1
+
+	for i, e := range err {
+		if e != nil && idx == -1 {
+			targetErr = e
+			idx = i
+		}
+	}
+
+	return idx, targetErr
+}
