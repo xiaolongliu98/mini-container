@@ -62,6 +62,11 @@ func UnionMountForInstance(name, imageDir string) error {
 	wordDir := filepath.Join(InstanceWorkDir, name)
 	cowDir := filepath.Join(InstanceCOWDir, name)
 
+	imageDir, err := filepath.Abs(imageDir)
+	if err != nil {
+		return err
+	}
+
 	return syscall.Mount("overlay", mntDir, "overlay", 0,
 		fmt.Sprintf("upperdir=%s,lowerdir=%s,workdir=%s",
 			cowDir, imageDir, wordDir))
