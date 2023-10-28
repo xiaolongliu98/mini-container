@@ -16,6 +16,7 @@ var (
 	CMDNameChild  = "child"
 )
 
+// run [container name] [image path] [entry point] [args...]
 func main() {
 	switch os.Args[1] {
 	case CMDNameParent:
@@ -27,12 +28,21 @@ func main() {
 	}
 }
 
+// ~ run [container name] [image path] [entry point] [args...]
 func parent() {
+	log.Printf("RUNNING parent as PID %d\n", os.Getpid())
+
+	var (
+		containerName = os.Args[2]
+		imageDir      = os.Args[3]
+	)
+	// STEP 1 初始化br0网桥配置
+
 	// parent start child process
 	os.Args[1] = CMDNameChild
 	cmd := exec.Command(ProcSelfExe, os.Args[1:]...)
 
-	// STEP 1: 设置 child process 的 Namespace 来隔离各种资源
+	// STEP 2 设置 child process 的 Namespace 来隔离各种资源
 	// CLONE_NEWUTS: hostname
 	// CLONE_NEWPID: process id
 	// CLONE_NEWNS: mount
@@ -54,29 +64,50 @@ func parent() {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
-	log.Printf("RUNNING parent as PID %d\n", os.Getpid())
-	// 运行命令并检查错误
-	if err := cmd.Run(); err != nil {
+	if _, err := common.ErrGroup(
+		fs.CreateInstanceDir(containerName),
+		fs.UnionMountForInstance(containerName, imageDir),
+	); err != nil {
+		log.Fatalln("ERROR parent", err)
+	}
+
+	// Start 异步启动， Run 同步启动
+	if err := cmd.Start(); err != nil {
+		log.Fatalln("ERROR parent", err)
+	}
+
+	// TODO child进程初始化完毕后，再执行下方
+	// TODO 设置Cgroups
+	// TODO 设置network
+
+	if err := cmd.Wait(); err != nil {
+		log.Fatalln("ERROR parent", err)
+	}
+
+	// 删除操作
+	if _, err := common.ErrGroup(
+		fs.UnionUnmountForInstance(containerName),
+		fs.DeleteInstanceDir(containerName),
+		// TODO 清空Cgroups目录
+	); err != nil {
 		log.Fatalln("ERROR parent", err)
 	}
 }
 
+// ~ child [container name] [image path] [entry point] [args...]
 func child() {
 	var (
-		childCMD = os.Args[2]
-		rootfs   = "./rootfs"
+		containerName = os.Args[2]
+		childCMD      = os.Args[4]
 	)
 
 	log.Printf("RUNNING %v as PID %d\n", childCMD, os.Getpid())
 
-	// STEP 2: 挂载文件系统 or 隔离文件系统
-	common.Must(fs.ChangeRoot(rootfs))
-
-	// TODO STEP 3: 设置 Cgroup 来限制资源使用
-	// cg()
+	// STEP 3: 挂载文件系统 or 隔离文件系统
+	common.Must(fs.ChangeRootForInstance(containerName))
 
 	// 注意：syscall.Exec 是替换当前进程，cmd.Run 是创建一个新的进程
-	if err := syscall.Exec(childCMD, os.Args[2:], os.Environ()); err != nil {
+	if err := syscall.Exec(childCMD, os.Args[4:], os.Environ()); err != nil {
 		log.Fatalln("ERROR child", err)
 	}
 }

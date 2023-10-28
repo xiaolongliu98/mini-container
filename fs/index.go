@@ -67,14 +67,21 @@ func UnionMountForInstance(name, imageDir string) error {
 			cowDir, imageDir, wordDir))
 }
 
-// UnionUmountForInstance 取消联合挂载
+// UnionUnmountForInstance 取消联合挂载
 // 注意：取消挂载后，你需要调用DeleteInstanceDir删除实例目录
-func UnionUmountForInstance(name string) error {
+func UnionUnmountForInstance(name string) error {
 	return common.Err(common.ErrGroup(
 		syscall.Unmount(filepath.Join(InstanceMountDir, name), 0),
 		syscall.Unmount(filepath.Join(InstanceWorkDir, name), 0),
 		syscall.Unmount(filepath.Join(InstanceCOWDir, name), 0),
 	))
+}
+
+// ChangeRootForInstance ChangeRoot的封装，用于将 rootfs 切换到指定的目录，同时将 oldRootfs 作为挂载点
+// 注意：需要在child中执行
+func ChangeRootForInstance(name string) error {
+	rootfs := filepath.Join(InstanceMountDir, name)
+	return ChangeRoot(rootfs)
 }
 
 // ChangeRoot 用于将 rootfs 切换到指定的目录，同时将 oldRootfs 作为挂载点
