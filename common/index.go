@@ -1,6 +1,10 @@
 package common
 
-import "log"
+import (
+	"encoding/json"
+	"log"
+	"os"
+)
 
 func Must(err ...error) {
 	for i, e := range err {
@@ -43,4 +47,17 @@ func ErrGroupCount(err ...error) (int, error) {
 	}
 
 	return count, targetErr
+}
+
+func WriteJSON(name string, obj any) error {
+	data, _ := json.Marshal(obj)
+	return os.WriteFile(name, data, 0644)
+}
+
+func ReadJSON(name string, objPtr any) error {
+	data, err := os.ReadFile(name)
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(data, objPtr)
 }

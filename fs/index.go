@@ -38,13 +38,22 @@ const (
 	InstanceMountDir = ConfigDir + "/mnt"
 	InstanceWorkDir  = ConfigDir + "/work"
 	InstanceCOWDir   = ConfigDir + "/cow"
+	InstanceStateDir = ConfigDir + "/state"
 )
 
 func CreateInstanceDir(name string) error {
+	state := &InstanceState{
+		Name:         name,
+		UnionMounted: false,
+		ImageDir:     "",
+	}
+
 	return common.Err(common.ErrGroup(
 		os.MkdirAll(filepath.Join(InstanceMountDir, name), 0755),
 		os.MkdirAll(filepath.Join(InstanceWorkDir, name), 0755),
 		os.MkdirAll(filepath.Join(InstanceCOWDir, name), 0755),
+		os.MkdirAll(filepath.Join(InstanceStateDir, name), 0755),
+		common.WriteJSON(filepath.Join(InstanceStateDir, name, StateName), state),
 	))
 }
 
@@ -53,13 +62,19 @@ func DeleteInstanceDir(name string) error {
 		os.RemoveAll(filepath.Join(InstanceMountDir, name)),
 		os.RemoveAll(filepath.Join(InstanceWorkDir, name)),
 		os.RemoveAll(filepath.Join(InstanceCOWDir, name)),
+		os.RemoveAll(filepath.Join(InstanceStateDir, name)),
 	))
 }
 
 // UnionMountForInstance 联合挂载镜像层和容器层
 // 注意：挂载前，你需要先调用CreateInstanceDir保证实例目录存在
 func UnionMountForInstance(name, imageDir string) error {
-	if ExistsUnionMountForInstance(name) {
+	statePath := filepath.Join(InstanceStateDir, name, StateName)
+	state := &InstanceState{}
+	if err := common.ReadJSON(statePath, state); err != nil {
+		return err
+	}
+	if state.UnionMounted {
 		return nil
 	}
 
@@ -72,9 +87,15 @@ func UnionMountForInstance(name, imageDir string) error {
 		return err
 	}
 
-	return syscall.Mount("overlay", mntDir, "overlay", 0,
+	if err := syscall.Mount("overlay", mntDir, "overlay", 0,
 		fmt.Sprintf("upperdir=%s,lowerdir=%s,workdir=%s",
-			cowDir, imageDir, wordDir))
+			cowDir, imageDir, wordDir)); err != nil {
+		return err
+	}
+
+	state.ImageDir = imageDir
+	state.UnionMounted = true
+	return common.WriteJSON(statePath, state)
 }
 
 func ExistsUnionMountForInstance(name string) bool {
