@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	common "mini-container/common"
 	"mini-container/fs"
@@ -16,6 +17,7 @@ var (
 	CMDNameParent = "run"
 	CMDNameChild  = "child"
 	CMDNameRemove = "rm"
+	CMDNameList   = "ls"
 )
 
 // run [container name] [image path] [entry point] [args...]
@@ -27,29 +29,10 @@ func main() {
 		child()
 	case CMDNameRemove:
 		remove()
+	case CMDNameList:
+		list()
 	default:
 		log.Fatalln("unknown command, what do you want?")
-	}
-}
-
-// ~ rm [container name]
-func remove() {
-	var (
-		containerName = os.Args[2]
-	)
-
-	if !fs.ExistsUnionMountForInstance(containerName) {
-		log.Printf("container %v not found\n", containerName)
-		return
-	}
-
-	// 删除操作
-	if i, err := common.ErrGroup(
-		fs.UnionUnmountForInstance(containerName),
-		fs.DeleteInstanceDir(containerName),
-		// TODO 清空Cgroups目录
-	); err != nil && !strings.Contains(err.Error(), "exit status 32") {
-		log.Printf("ERROR %v remove %s", i, err)
 	}
 }
 
@@ -89,16 +72,23 @@ func parent() {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
-	if _, err := common.ErrGroup(
-		fs.CreateInstanceDir(containerName),
-		fs.UnionMountForInstance(containerName, imageDir),
-	); err != nil {
-		log.Fatalln("ERROR 1 parent", err)
+	if fs.ExistsInstance(containerName) {
+		if err := fs.SetInstanceRunning(containerName); err != nil {
+			log.Fatalln("ERROR 1 parent", err)
+		}
+
+	} else {
+		if _, err := common.ErrGroup(
+			fs.CreateInstanceDir(containerName),
+			fs.UnionMountForInstance(containerName, imageDir),
+		); err != nil {
+			log.Fatalln("ERROR 2 parent", err)
+		}
 	}
 
 	// Start 异步启动， Run 同步启动
 	if err := cmd.Start(); err != nil {
-		log.Println("ERROR 2 parent", err)
+		log.Println("ERROR 3 parent", err)
 	}
 
 	// TODO child进程初始化完毕后，再执行下方
@@ -106,9 +96,12 @@ func parent() {
 	// TODO 设置network
 
 	if err := cmd.Wait(); err != nil {
-		log.Println("ERROR 3 parent", err)
+		log.Println("ERROR 4 parent", err)
 	}
 
+	if err := fs.SetInstanceStopped(containerName); err != nil {
+		log.Println("ERROR 5 parent", err)
+	}
 }
 
 // ~ child [container name] [image path] [entry point] [args...]
@@ -126,5 +119,40 @@ func child() {
 	// 注意：syscall.Exec 是替换当前进程，cmd.Run 是创建一个新的进程
 	if err := syscall.Exec(childCMD, os.Args[4:], os.Environ()); err != nil {
 		log.Println("ERROR 1 child", err)
+	}
+}
+
+// ~ ls
+func list() {
+	instances, err := fs.ListInstance()
+	if err != nil {
+		log.Fatalln("ERROR list", err)
+	}
+
+	// Name	Image Status
+	fmt.Printf("%v\t%v\t%v\n", "Name", "Image", "Status")
+	for _, instance := range instances {
+		fmt.Printf("%v\t%v\t%v\n", instance.Name, instance.ImageDir, instance.LifeCycle)
+	}
+}
+
+// ~ rm [container name]
+func remove() {
+	var (
+		containerName = os.Args[2]
+	)
+
+	if !fs.ExistsInstance(containerName) {
+		log.Printf("container %v not found\n", containerName)
+		return
+	}
+
+	// 删除操作
+	if i, err := common.ErrGroup(
+		fs.UnionUnmountForInstance(containerName),
+		fs.DeleteInstanceDir(containerName),
+		// TODO 清空Cgroups目录
+	); err != nil && !strings.Contains(err.Error(), "exit status 32") {
+		log.Printf("ERROR %v remove %s", i, err)
 	}
 }

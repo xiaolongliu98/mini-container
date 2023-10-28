@@ -2,6 +2,7 @@ package fs
 
 import (
 	"fmt"
+	"log"
 	"mini-container/common"
 	"os"
 	"os/exec"
@@ -42,10 +43,8 @@ const (
 )
 
 func CreateInstanceDir(name string) error {
-	state := &InstanceState{
-		Name:         name,
-		UnionMounted: false,
-		ImageDir:     "",
+	if ExistsInstance(name) {
+		return nil
 	}
 
 	return common.Err(common.ErrGroup(
@@ -53,7 +52,7 @@ func CreateInstanceDir(name string) error {
 		os.MkdirAll(filepath.Join(InstanceWorkDir, name), 0755),
 		os.MkdirAll(filepath.Join(InstanceCOWDir, name), 0755),
 		os.MkdirAll(filepath.Join(InstanceStateDir, name), 0755),
-		common.WriteJSON(filepath.Join(InstanceStateDir, name, StateName), state),
+		NewCreatedInstanceState(name).Save(),
 	))
 }
 
@@ -69,20 +68,23 @@ func DeleteInstanceDir(name string) error {
 // UnionMountForInstance 联合挂载镜像层和容器层
 // 注意：挂载前，你需要先调用CreateInstanceDir保证实例目录存在
 func UnionMountForInstance(name, imageDir string) error {
-	statePath := filepath.Join(InstanceStateDir, name, StateName)
-	state := &InstanceState{}
-	if err := common.ReadJSON(statePath, state); err != nil {
+	state, err := NewInstanceStateFromDisk(name)
+	if err != nil {
+		return err
+	}
+
+	if err := state.ToRunning(); err != nil {
 		return err
 	}
 	if state.UnionMounted {
-		return nil
+		return state.Save()
 	}
 
 	mntDir := filepath.Join(InstanceMountDir, name)
 	wordDir := filepath.Join(InstanceWorkDir, name)
 	cowDir := filepath.Join(InstanceCOWDir, name)
 
-	imageDir, err := filepath.Abs(imageDir)
+	imageDir, err = filepath.Abs(imageDir)
 	if err != nil {
 		return err
 	}
@@ -94,11 +96,10 @@ func UnionMountForInstance(name, imageDir string) error {
 	}
 
 	state.ImageDir = imageDir
-	state.UnionMounted = true
-	return common.WriteJSON(statePath, state)
+	return state.Save()
 }
 
-func ExistsUnionMountForInstance(name string) bool {
+func ExistsInstance(name string) bool {
 	mntDir := filepath.Join(InstanceMountDir, name)
 	return IsExist(mntDir)
 }
@@ -166,4 +167,46 @@ func IsExist(path string) bool {
 		}
 	}
 	return true
+}
+
+func ListInstance() ([]*InstanceState, error) {
+	// 遍历InstanceStateDir目录
+	// 给我代码
+	dirs, err := os.ReadDir(InstanceStateDir)
+	if err != nil {
+		return nil, err
+	}
+
+	states := make([]*InstanceState, 0, len(dirs))
+	for _, dir := range dirs {
+		state, err := NewInstanceStateFromDisk(dir.Name())
+		if err != nil {
+			log.Printf("get instance %s state error: %v", dir.Name(), err)
+			continue
+		}
+		states = append(states, state)
+	}
+	return states, nil
+}
+
+func SetInstanceStopped(name string) error {
+	state, err := NewInstanceStateFromDisk(name)
+	if err != nil {
+		return err
+	}
+	if err := state.ToStopped(); err != nil {
+		return err
+	}
+	return state.Save()
+}
+
+func SetInstanceRunning(name string) error {
+	state, err := NewInstanceStateFromDisk(name)
+	if err != nil {
+		return err
+	}
+	if err := state.ToRunning(); err != nil {
+		return err
+	}
+	return state.Save()
 }
