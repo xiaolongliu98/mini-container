@@ -73,7 +73,7 @@ func parent() {
 
 	// Start 异步启动， Run 同步启动
 	if err := cmd.Start(); err != nil {
-		log.Fatalln("ERROR parent", err)
+		log.Println("ERROR parent", err)
 	}
 
 	// TODO child进程初始化完毕后，再执行下方
@@ -81,7 +81,7 @@ func parent() {
 	// TODO 设置network
 
 	if err := cmd.Wait(); err != nil {
-		log.Fatalln("ERROR parent", err)
+		log.Println("ERROR parent", err)
 	}
 
 	// 删除操作
@@ -90,7 +90,7 @@ func parent() {
 		fs.DeleteInstanceDir(containerName),
 		// TODO 清空Cgroups目录
 	); err != nil {
-		log.Fatalln("ERROR parent", err)
+		log.Println("ERROR parent", err)
 	}
 }
 
@@ -108,6 +108,6 @@ func child() {
 
 	// 注意：syscall.Exec 是替换当前进程，cmd.Run 是创建一个新的进程
 	if err := syscall.Exec(childCMD, os.Args[4:], os.Environ()); err != nil {
-		log.Fatalln("ERROR child", err)
+		log.Println("ERROR child", err)
 	}
 }
