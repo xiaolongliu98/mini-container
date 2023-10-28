@@ -43,7 +43,6 @@ func NewCreatedInstanceState(name string) *InstanceState {
 }
 
 func (s *InstanceState) ToRunning() error {
-	s.UnionMounted = true
 	s.LifeCycle = Running
 	return nil
 }
@@ -52,8 +51,6 @@ func (s *InstanceState) ToStopped() error {
 	if s.LifeCycle != Running {
 		return errors.New("instance is not running")
 	}
-
-	s.UnionMounted = false
 	s.LifeCycle = Stopped
 	return nil
 }
@@ -69,4 +66,9 @@ func (s *InstanceState) Load(name string) error {
 func (s *InstanceState) Save() error {
 	statePath := filepath.Join(InstanceStateDir, s.Name, StateName)
 	return common.WriteJSON(statePath, s)
+}
+
+func (s *InstanceState) SetMount(imageDir string) {
+	s.ImageDir = imageDir
+	s.UnionMounted = true
 }

@@ -77,6 +77,7 @@ func UnionMountForInstance(name, imageDir string) error {
 		return err
 	}
 	if state.UnionMounted {
+		// 已经挂载过了，直接跳过
 		return state.Save()
 	}
 
@@ -95,7 +96,7 @@ func UnionMountForInstance(name, imageDir string) error {
 		return err
 	}
 
-	state.ImageDir = imageDir
+	state.SetMount(imageDir)
 	return state.Save()
 }
 
