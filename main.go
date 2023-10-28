@@ -14,6 +14,7 @@ var (
 
 	CMDNameParent = "run"
 	CMDNameChild  = "child"
+	CMDNameRemove = "rm"
 )
 
 // run [container name] [image path] [entry point] [args...]
@@ -23,12 +24,35 @@ func main() {
 		parent()
 	case CMDNameChild:
 		child()
+	case CMDNameRemove:
+		remove()
 	default:
 		log.Fatalln("unknown command, what do you want?")
 	}
 }
 
-// ~ run [container name] [image path] [entry point] [args...]
+// ~ rm [container name]
+func remove() {
+	var (
+		containerName = os.Args[2]
+	)
+
+	if !fs.ExistsUnionMountForInstance(containerName) {
+		log.Printf("container %v not found\n", containerName)
+		return
+	}
+
+	// 删除操作
+	if i, err := common.ErrGroup(
+		fs.UnionUnmountForInstance(containerName),
+		fs.DeleteInstanceDir(containerName),
+		// TODO 清空Cgroups目录
+	); err != nil {
+		log.Printf("ERROR 4.%v parent %s", i, err)
+	}
+}
+
+// ~ parent/run [container name] [image path] [entry point] [args...]
 func parent() {
 	log.Printf("RUNNING parent as PID %d\n", os.Getpid())
 
@@ -84,14 +108,6 @@ func parent() {
 		log.Println("ERROR 3 parent", err)
 	}
 
-	// 删除操作
-	if i, err := common.ErrGroup(
-		fs.UnionUnmountForInstance(containerName),
-		fs.DeleteInstanceDir(containerName),
-		// TODO 清空Cgroups目录
-	); err != nil {
-		log.Printf("ERROR 4.%v parent %s", i, err)
-	}
 }
 
 // ~ child [container name] [image path] [entry point] [args...]

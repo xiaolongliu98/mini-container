@@ -59,6 +59,10 @@ func DeleteInstanceDir(name string) error {
 // UnionMountForInstance 联合挂载镜像层和容器层
 // 注意：挂载前，你需要先调用CreateInstanceDir保证实例目录存在
 func UnionMountForInstance(name, imageDir string) error {
+	if ExistsUnionMountForInstance(name) {
+		return nil
+	}
+
 	mntDir := filepath.Join(InstanceMountDir, name)
 	wordDir := filepath.Join(InstanceWorkDir, name)
 	cowDir := filepath.Join(InstanceCOWDir, name)
@@ -73,6 +77,11 @@ func UnionMountForInstance(name, imageDir string) error {
 			cowDir, imageDir, wordDir))
 }
 
+func ExistsUnionMountForInstance(name string) bool {
+	mntDir := filepath.Join(InstanceMountDir, name)
+	return IsExist(mntDir)
+}
+
 // UnionUnmountForInstance 取消联合挂载
 // 注意：取消挂载后，你需要调用DeleteInstanceDir删除实例目录
 func UnionUnmountForInstance(name string) error {
@@ -82,6 +91,7 @@ func UnionUnmountForInstance(name string) error {
 	//	syscall.Unmount(filepath.Join(InstanceCOWDir, name), 0),
 	//))
 
+	// 和上方syscall.Unmount差距在于exec.Command是启动新的进程，而syscall.Unmount是在当前进程中执行
 	return common.Err(common.ErrGroup(
 		common.Err(exec.Command("umount", filepath.Join(InstanceMountDir, name)).CombinedOutput()),
 		common.Err(exec.Command("umount", filepath.Join(InstanceWorkDir, name)).CombinedOutput()),
@@ -124,4 +134,15 @@ func ChangeRoot(rootfs string) error {
 func MountProc() error {
 	defaultMountFlags := syscall.MS_NOEXEC | syscall.MS_NOSUID | syscall.MS_NODEV
 	return syscall.Mount("proc", "/proc", "proc", uintptr(defaultMountFlags), "")
+}
+
+// IsExist 判断所给路径文件/文件夹是否存在
+func IsExist(path string) bool {
+	_, err := os.Stat(path) //os.Stat获取文件信息
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false
+		}
+	}
+	return true
 }
