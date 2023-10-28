@@ -6,6 +6,7 @@ import (
 	"mini-container/fs"
 	"os"
 	"os/exec"
+	"strings"
 	"syscall"
 )
 
@@ -47,8 +48,8 @@ func remove() {
 		fs.UnionUnmountForInstance(containerName),
 		fs.DeleteInstanceDir(containerName),
 		// TODO 清空Cgroups目录
-	); err != nil {
-		log.Printf("ERROR 4.%v parent %s", i, err)
+	); err != nil && !strings.Contains(err.Error(), "exit status 32") {
+		log.Printf("ERROR %v remove %s", i, err)
 	}
 }
 
