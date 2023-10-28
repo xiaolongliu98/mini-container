@@ -2,6 +2,7 @@ package common
 
 import (
 	"github.com/stretchr/testify/assert"
+	"os"
 	"testing"
 )
 
@@ -100,4 +101,6 @@ func TestIPPoolRead(t *testing.T) {
 	assert.False(t, pool.IsAvailable("192.168.111.255/24"))
 	assert.True(t, pool.IsAvailable("192.168.111.254/24"))
 	assert.True(t, pool.IsAvailable("192.168.111.1/24"))
+
+	os.RemoveAll("./ip_pool.json")
 }
