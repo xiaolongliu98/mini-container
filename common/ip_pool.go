@@ -39,23 +39,24 @@ func LoadIPPool(dir, name string) (*IPPool, error) {
 }
 
 // AllocateIP allocate an ip from the pool
-// cidr: x.x.x.x/x
-func (p *IPPool) AllocateIP(cidr string) (string, error) {
+// ipNetStr: x.x.x.x/x
+// return: IP likes x.x.x.x
+func (p *IPPool) AllocateIP(ipNetStr string) (string, error) {
 	// ip: 192.168.0.1/24
-	_, ipNet, err := net.ParseCIDR(cidr)
+	_, ipNet, err := net.ParseCIDR(ipNetStr)
 	if err != nil {
 		return "", err
 	}
 
-	cidr = ipNet.String()
+	ipNetStr = ipNet.String()
 
-	bm, ok := p.m[cidr]
+	bm, ok := p.m[ipNetStr]
 	if !ok {
 		ones, _ := ipNet.Mask.Size()
 		validIPs := 1 << uint(32-ones)
 
 		bm = NewBitmap(validIPs)
-		p.m[cidr] = bm
+		p.m[ipNetStr] = bm
 	}
 
 	if bm.Ones() >= bm.Cap()-2 {
@@ -79,17 +80,17 @@ func (p *IPPool) AllocateIP(cidr string) (string, error) {
 }
 
 // ReleaseIP release an ip to the pool
-// cidr: x.x.x.x/x
-func (p *IPPool) ReleaseIP(cidr string) error {
-	ip, ipNet, err := net.ParseCIDR(cidr)
+// ipNetStr: x.x.x.x/x
+func (p *IPPool) ReleaseIP(ipNetStr string) error {
+	ip, ipNet, err := net.ParseCIDR(ipNetStr)
 	if err != nil {
 		return err
 	}
 
-	cidr = ipNet.String()
+	ipNetStr = ipNet.String()
 	ip = ip.To4()
 
-	bm, ok := p.m[cidr]
+	bm, ok := p.m[ipNetStr]
 	if !ok {
 		return nil
 	}
@@ -104,14 +105,14 @@ func (p *IPPool) ReleaseIP(cidr string) error {
 }
 
 // IsAvailable check if an ip is available
-// cidr: x.x.x.x/x
-func (p *IPPool) IsAvailable(cidr string) bool {
-	ip, ipNet, err := net.ParseCIDR(cidr)
+// ipNetStr: x.x.x.x/x
+func (p *IPPool) IsAvailable(ipNetStr string) bool {
+	ip, ipNet, err := net.ParseCIDR(ipNetStr)
 	if err != nil {
 		return false
 	}
 
-	cidr = ipNet.String()
+	ipNetStr = ipNet.String()
 	ip = ip.To4()
 
 	// get ip pos
@@ -123,7 +124,7 @@ func (p *IPPool) IsAvailable(cidr string) bool {
 		return false
 	}
 
-	bm, ok := p.m[cidr]
+	bm, ok := p.m[ipNetStr]
 	if !ok {
 		return true
 	}

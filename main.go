@@ -36,7 +36,7 @@ func main() {
 	}
 }
 
-// ~ parent/run [container name] [image path] [entry point] [args...]
+// ~ run [container name] [image path] [entry point] [args...]
 func parent() {
 	log.Printf("RUNNING parent as PID %d\n", os.Getpid())
 
@@ -48,7 +48,7 @@ func parent() {
 
 	// parent start child process
 	os.Args[1] = CMDNameChild
-	cmd := exec.Command(ProcSelfExe, os.Args[1:]...)
+	cmd := exec.Command(ProcSelfExe, os.Args[1:]...) // equivalent: ~ child [container name] [image path] [entry point] [args...]
 
 	// STEP 2 设置 child process 的 Namespace 来隔离各种资源
 	// CLONE_NEWUTS: hostname
@@ -130,9 +130,9 @@ func list() {
 	}
 
 	// Name	Image Status
-	fmt.Printf("%v\t%v\t%v\n", "Name", "Image", "Status")
+	fmt.Printf("%v\t%v\t\t\t%v\n", "Name", "Image", "Status")
 	for _, instance := range instances {
-		fmt.Printf("%v\t%v\t%v\n", instance.Name, instance.ImageDir, instance.LifeCycle)
+		fmt.Printf("%v\t%v\t\t\t%v\n", instance.Name, instance.ImageDir, instance.LifeCycle)
 	}
 }
 
