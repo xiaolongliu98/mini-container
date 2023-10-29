@@ -1,62 +1,49 @@
-package common
+package ippool
 
 import (
-	"encoding/json"
 	"errors"
-	"fmt"
+	"mini-container/common"
 	"net"
-	"os"
-	"path/filepath"
 )
 
 type IPPool struct {
-	//cidr -> bitmap
-	m map[string]*Bitmap
+	//subnetStr -> bitmap
+	m map[string]*common.Bitmap
 }
 
-func NewIPPool() *IPPool {
-	return &IPPool{m: make(map[string]*Bitmap)}
+func New() *IPPool {
+	return &IPPool{m: make(map[string]*common.Bitmap)}
 }
 
-func SaveIPPool(pool *IPPool, dir, name string) error {
-	jsonBytes, _ := json.Marshal(pool.m)
-	return os.WriteFile(filepath.Join(dir, name), jsonBytes, 0644)
+func NewFromDisk(path string) (*IPPool, error) {
+	p := &IPPool{m: make(map[string]*common.Bitmap)}
+	err := common.ReadJSON(path, p.m)
+	return p, err
 }
 
-func LoadIPPool(dir, name string) (*IPPool, error) {
-	jsonBytes, err := os.ReadFile(fmt.Sprintf("%s/%s", dir, name))
-	if err != nil {
-		return nil, err
-	}
-
-	pool := NewIPPool()
-	err = json.Unmarshal(jsonBytes, &pool.m)
-	if err != nil {
-		return nil, err
-	}
-
-	return pool, nil
+func (p *IPPool) Save(path string) error {
+	return common.WriteJSON(path, p.m)
 }
 
 // AllocateIP allocate an ip from the pool
 // ipNetStr: x.x.x.x/x
 // return: IP likes x.x.x.x
-func (p *IPPool) AllocateIP(ipNetStr string) (string, error) {
+func (p *IPPool) AllocateIP(subnetStr string) (string, error) {
 	// ip: 192.168.0.1/24
-	_, ipNet, err := net.ParseCIDR(ipNetStr)
+	_, ipNet, err := net.ParseCIDR(subnetStr)
 	if err != nil {
 		return "", err
 	}
 
-	ipNetStr = ipNet.String()
+	subnetStr = ipNet.String()
 
-	bm, ok := p.m[ipNetStr]
+	bm, ok := p.m[subnetStr]
 	if !ok {
 		ones, _ := ipNet.Mask.Size()
 		validIPs := 1 << uint(32-ones)
 
-		bm = NewBitmap(validIPs)
-		p.m[ipNetStr] = bm
+		bm = common.NewBitmap(validIPs)
+		p.m[subnetStr] = bm
 	}
 
 	if bm.Ones() >= bm.Cap()-2 {
@@ -129,4 +116,30 @@ func (p *IPPool) IsAvailable(ipNetStr string) bool {
 		return true
 	}
 	return !bm.Get(int(pos))
+}
+
+// SetUsed set an ip to used
+// ipNetStr: x.x.x.x/x
+func (p *IPPool) SetUsed(ipNetStr string) error {
+	ip, ipNet, err := net.ParseCIDR(ipNetStr)
+	if err != nil {
+		return err
+	}
+
+	subnetStr := ipNet.String()
+	ip = ip.To4()
+	ones, _ := ipNet.Mask.Size()
+
+	bm, ok := p.m[ipNetStr]
+	if !ok {
+
+		validIPs := 1 << uint(32-ones)
+		bm = common.NewBitmap(validIPs)
+		p.m[subnetStr] = bm
+	}
+
+	// get ip pos
+	ipUint32 := uint32(ip[0])<<24 | uint32(ip[1])<<16 | uint32(ip[2])<<8 | uint32(ip[3])
+	pos := ipUint32 & ((1 << uint(32-ones)) - 1)
+	return bm.Set(int(pos))
 }

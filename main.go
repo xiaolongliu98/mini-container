@@ -5,10 +5,13 @@ import (
 	"log"
 	common "mini-container/common"
 	"mini-container/fs"
+	"mini-container/network"
 	"os"
 	"os/exec"
+	"os/signal"
 	"strings"
 	"syscall"
+	"time"
 )
 
 var (
@@ -44,7 +47,8 @@ func parent() {
 		containerName = os.Args[2]
 		imageDir      = os.Args[3]
 	)
-	// STEP 1 初始化br0网桥配置
+	// STEP 1 初始化mini-ctr0网桥配置
+	common.MustLog("parent 0", network.Init())
 
 	// parent start child process
 	os.Args[1] = CMDNameChild
@@ -73,39 +77,43 @@ func parent() {
 	cmd.Stderr = os.Stderr
 
 	if fs.ExistsInstance(containerName) {
-		if err := fs.SetInstanceRunning(containerName); err != nil {
-			log.Fatalln("ERROR 1 parent", err)
-		}
+		common.MustLog("parent 1", fs.SetInstanceRunning(containerName))
 
 	} else {
-		if _, err := common.ErrGroup(
+		common.MustLog("parent 2",
 			fs.CreateInstanceDir(containerName),
 			fs.UnionMountForInstance(containerName, imageDir),
-		); err != nil {
-			log.Fatalln("ERROR 2 parent", err)
-		}
+		)
 	}
+	// 提前创建信号channel，防止子进程启动完毕后，父进程还没准备好channel阻塞接收
+	signalCh := make(chan os.Signal, 1)
+	signal.Notify(signalCh, syscall.SIGUSR2)
 
 	// Start 异步启动， Run 同步启动
-	if err := cmd.Start(); err != nil {
-		log.Println("ERROR 3 parent", err)
-	}
+	common.ErrLog("parent 3", cmd.Start())
 
 	// TODO child进程初始化完毕后，再执行下方
 	// TODO 设置Cgroups
-	// TODO 设置network
+	// 设置network
+	// 等待子进程启动完毕
+	<-signalCh
+	common.MustLog("parent 4",
+		network.ConfigNetworkForInstance(cmd.Process.Pid),
+		common.Signal(cmd.Process.Pid),
+	)
 
-	if err := cmd.Wait(); err != nil {
-		log.Println("ERROR 4 parent", err)
-	}
-
-	if err := fs.SetInstanceStopped(containerName); err != nil {
-		log.Println("ERROR 5 parent", err)
-	}
+	common.ErrLog("parent 5", cmd.Wait())
+	// 清理工作在rm中
 }
 
 // ~ child [container name] [image path] [entry point] [args...]
 func child() {
+	// 通知父进程，子进程初始化完毕，可以进行网络配置
+	time.Sleep(1 * time.Millisecond) // 防止父进程还没准备好channel阻塞接收
+	common.MustLog("child 0", common.Signal(syscall.Getppid()))
+	// 等待父进程通知网络配置完毕
+	common.WaitSignal()
+
 	var (
 		containerName = os.Args[2]
 		childCMD      = os.Args[4]
@@ -114,20 +122,16 @@ func child() {
 	log.Printf("RUNNING %v as PID %d\n", childCMD, os.Getpid())
 
 	// STEP 3: 挂载文件系统 or 隔离文件系统
-	common.Must(fs.ChangeRootForInstance(containerName))
+	common.MustLog("child 1", fs.ChangeRootForInstance(containerName))
 
 	// 注意：syscall.Exec 是替换当前进程，cmd.Run 是创建一个新的进程
-	if err := syscall.Exec(childCMD, os.Args[4:], os.Environ()); err != nil {
-		log.Println("ERROR 1 child", err)
-	}
+	common.MustLog("child 2", syscall.Exec(childCMD, os.Args[4:], os.Environ()))
 }
 
 // ~ ls
 func list() {
 	instances, err := fs.ListInstance()
-	if err != nil {
-		log.Fatalln("ERROR list", err)
-	}
+	common.MustLog("list 0", err)
 
 	// Name	Image Status
 	fmt.Printf("%v\t%v\t\t\t%v\n", "Name", "Image", "Status")

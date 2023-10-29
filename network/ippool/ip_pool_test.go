@@ -1,4 +1,4 @@
-package common
+package ippool
 
 import (
 	"github.com/stretchr/testify/assert"
@@ -10,7 +10,7 @@ import (
 func TestIPPoolWrite(t *testing.T) {
 	var err error
 	var ip string
-	pool := NewIPPool()
+	pool := New()
 
 	ip, err = pool.AllocateIP("192.168.0.0/24")
 	if err != nil {
@@ -69,7 +69,7 @@ func TestIPPoolWrite(t *testing.T) {
 	}
 	t.Log(ip)
 
-	err = SaveIPPool(pool, "./", "ip_pool.json")
+	err = pool.Save("./ip_pool.json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -78,7 +78,7 @@ func TestIPPoolWrite(t *testing.T) {
 // TestIPPoolRead
 func TestIPPoolRead(t *testing.T) {
 	var err error
-	pool, err := LoadIPPool("./", "ip_pool.json")
+	pool, err := NewFromDisk("./ip_pool.json")
 	if err != nil {
 		t.Fatal(err)
 	}

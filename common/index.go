@@ -2,14 +2,32 @@ package common
 
 import (
 	"encoding/json"
-	"log"
+	"fmt"
 	"os"
 )
 
 func Must(err ...error) {
 	for i, e := range err {
 		if e != nil {
-			log.Fatalf("ERROR[%d]: %v\n", i, e)
+			fmt.Printf("ERROR[%d]: %v\n", i, e)
+			os.Exit(1)
+		}
+	}
+}
+
+func MustLog(errTag string, err ...error) {
+	for i, e := range err {
+		if e != nil {
+			fmt.Printf("ERROR %s.%d: %v\n", errTag, i, e)
+			os.Exit(1)
+		}
+	}
+}
+
+func ErrLog(errTag string, err ...error) {
+	for i, e := range err {
+		if e != nil {
+			fmt.Printf("ERROR %s.%d: %v\n", errTag, i, e)
 		}
 	}
 }
