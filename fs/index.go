@@ -102,7 +102,7 @@ func UnionMountForInstance(name, imageDir string) error {
 
 func ExistsInstance(name string) bool {
 	mntDir := filepath.Join(InstanceMountDir, name)
-	return IsExist(mntDir)
+	return common.IsExist(mntDir)
 }
 
 // UnionUnmountForInstance 取消联合挂载
@@ -157,17 +157,6 @@ func ChangeRoot(rootfs string) error {
 func MountProc() error {
 	defaultMountFlags := syscall.MS_NOEXEC | syscall.MS_NOSUID | syscall.MS_NODEV
 	return syscall.Mount("proc", "/proc", "proc", uintptr(defaultMountFlags), "")
-}
-
-// IsExist 判断所给路径文件/文件夹是否存在
-func IsExist(path string) bool {
-	_, err := os.Stat(path) //os.Stat获取文件信息
-	if err != nil {
-		if os.IsNotExist(err) {
-			return false
-		}
-	}
-	return true
 }
 
 func ListInstance() ([]*InstanceState, error) {

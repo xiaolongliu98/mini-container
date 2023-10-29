@@ -79,3 +79,14 @@ func ReadJSON(name string, objPtr any) error {
 	}
 	return json.Unmarshal(data, objPtr)
 }
+
+// IsExist 判断所给路径文件/文件夹是否存在
+func IsExist(path string) bool {
+	_, err := os.Stat(path) //os.Stat获取文件信息
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false
+		}
+	}
+	return true
+}

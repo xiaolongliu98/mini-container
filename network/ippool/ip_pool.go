@@ -17,8 +17,11 @@ func New() *IPPool {
 
 func NewFromDisk(path string) (*IPPool, error) {
 	p := &IPPool{m: make(map[string]*common.Bitmap)}
-	err := common.ReadJSON(path, p.m)
-	return p, err
+	if common.IsExist(path) {
+		err := common.ReadJSON(path, p.m)
+		return p, err
+	}
+	return p, nil
 }
 
 func (p *IPPool) Save(path string) error {
