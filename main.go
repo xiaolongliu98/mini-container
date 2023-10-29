@@ -48,6 +48,18 @@ func parent() {
 		imageDir      = os.Args[3]
 	)
 
+	if fs.ExistsInstance(containerName) {
+		common.MustLog("parent 1", fs.SetInstanceRunning(containerName))
+
+	} else {
+		common.MustLog("parent 2",
+			fs.CreateInstanceDir(containerName),
+			fs.UnionMountForInstance(containerName, imageDir),
+		)
+	}
+	// STEP 1 初始化mini-ctr0网桥配置
+	common.MustLog("parent 0", network.Init())
+
 	// parent start child process
 	os.Args[1] = CMDNameChild
 	cmd := exec.Command(ProcSelfExe, os.Args[1:]...) // equivalent: ~ child [container name] [image path] [entry point] [args...]
@@ -68,23 +80,10 @@ func parent() {
 			syscall.CLONE_NEWIPC |
 			syscall.CLONE_NEWNET,
 	}
-
 	cmd.Env = os.Environ()
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-
-	if fs.ExistsInstance(containerName) {
-		common.MustLog("parent 1", fs.SetInstanceRunning(containerName))
-
-	} else {
-		common.MustLog("parent 2",
-			fs.CreateInstanceDir(containerName),
-			fs.UnionMountForInstance(containerName, imageDir),
-		)
-	}
-	// STEP 1 初始化mini-ctr0网桥配置
-	common.MustLog("parent 0", network.Init())
 
 	// 提前创建信号channel，防止子进程启动完毕后，父进程还没准备好channel阻塞接收
 	signalCh := make(chan os.Signal, 1)
