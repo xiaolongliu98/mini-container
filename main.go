@@ -47,8 +47,6 @@ func parent() {
 		containerName = os.Args[2]
 		imageDir      = os.Args[3]
 	)
-	// STEP 1 初始化mini-ctr0网桥配置
-	common.MustLog("parent 0", network.Init())
 
 	// parent start child process
 	os.Args[1] = CMDNameChild
@@ -85,6 +83,9 @@ func parent() {
 			fs.UnionMountForInstance(containerName, imageDir),
 		)
 	}
+	// STEP 1 初始化mini-ctr0网桥配置
+	common.MustLog("parent 0", network.Init())
+
 	// 提前创建信号channel，防止子进程启动完毕后，父进程还没准备好channel阻塞接收
 	signalCh := make(chan os.Signal, 1)
 	signal.Notify(signalCh, syscall.SIGUSR2)
