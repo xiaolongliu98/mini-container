@@ -2,9 +2,11 @@ package network
 
 import (
 	"fmt"
+	"math/rand"
 	"mini-container/network/bridge"
 	"mini-container/network/ippool"
 	"net"
+	"strconv"
 )
 
 const (
@@ -54,7 +56,9 @@ func ConfigNetworkForInstance(pid int) error {
 	}
 
 	// 主机上创建 veth 设备,并连接到网桥上
-	vethName := ""
+	randPart := strconv.Itoa(rand.Intn(9000) + 1000) // 1000~9999
+	vethName := fmt.Sprintf("%v-%v", strconv.Itoa(pid), randPart)
+
 	peerName, err := bridge.CreateVeth(DefaultBridgeName, vethName)
 
 	fmt.Println("[Debug]peerName:", peerName)
