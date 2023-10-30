@@ -145,6 +145,12 @@ func setInterfaceIPNet(name string, ipNetStr string) error {
 	return netlink.AddrAdd(iface, addr)
 }
 
+// setInterfaceIPNet 用于设置网络接口的IP地址
+func setInterfaceIPNet2(iface netlink.Link, ipNet *net.IPNet) error {
+	addr := &netlink.Addr{IPNet: ipNet, Peer: ipNet, Label: "", Flags: 0, Scope: 0}
+	return netlink.AddrAdd(iface, addr)
+}
+
 // CreateBridgeAndSetSNAT 创建网桥并设置SNAT规则
 // bridgeName string：网桥名称，长度不能超过15个字符
 // ipNetStr string：网桥的IP地址，格式为：x.x.x.x/x
@@ -229,7 +235,10 @@ func SetContainerIP(peerName string, pid int, containerIP net.IP, gateway *net.I
 		IP:   containerIP,
 		Mask: gateway.Mask,
 	}
-	if err := setInterfaceIPNet(peerName, peerIPNet.String()); err != nil {
+	//if err := setInterfaceIPNet(peerName, peerIPNet.String()); err != nil {
+	//	return fmt.Errorf("%v,%s", containerIP, err)
+	//}
+	if err := setInterfaceIPNet2(peerLink, peerIPNet); err != nil {
 		return fmt.Errorf("%v,%s", containerIP, err)
 	}
 	if err := netlink.LinkSetUp(peerLink); err != nil {

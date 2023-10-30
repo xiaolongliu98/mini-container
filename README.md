@@ -16,9 +16,13 @@
 2. linux namespace & cgroup & fs 
 
 # 使用
-需要注意，请在linux环境下使用，且需要root权限
+## 前提：
+1. 需要注意，请在linux环境下使用，且需要root权限
+2. iptables -A FORWARD -j ACCEPT
+3. echo 1 > /proc/sys/net/ipv4/ip_forward
 
-目前支持以下命令：
+
+## 目前支持以下命令：
 
 1. ./mini-container run [container name] [image path] [entry point] [args...]
 2. ./mini-container ls
