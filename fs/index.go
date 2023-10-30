@@ -42,7 +42,7 @@ const (
 	InstanceStateDir = ConfigDir + "/state"
 )
 
-func CreateInstanceDir(name string) error {
+func CreateInstanceDirAndState(name string) error {
 	if ExistsInstance(name) {
 		return nil
 	}
@@ -72,13 +72,9 @@ func UnionMountForInstance(name, imageDir string) error {
 	if err != nil {
 		return err
 	}
-
-	if err := state.ToRunning(); err != nil {
-		return err
-	}
 	if state.UnionMounted {
 		// 已经挂载过了，直接跳过
-		return state.Save()
+		return nil
 	}
 
 	mntDir := filepath.Join(InstanceMountDir, name)

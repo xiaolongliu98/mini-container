@@ -49,10 +49,16 @@ func ConfigNetworkForInstance(pid int) error {
 	if err != nil {
 		return fmt.Errorf("alloc ip fail %s", err)
 	}
+	if err := IPPool.Save(IPPoolFile); err != nil {
+		return fmt.Errorf("save ip fail %s", err)
+	}
 
 	// 主机上创建 veth 设备,并连接到网桥上
 	vethName := ""
 	peerName, err := bridge.CreateVeth(DefaultBridgeName, vethName)
+
+	fmt.Println("[Debug]peerName:", peerName)
+
 	if err != nil {
 		return fmt.Errorf("create veth fail err=%s", err)
 	}

@@ -219,14 +219,17 @@ func SetContainerIP(peerName string, pid int, containerIP net.IP, gateway *net.I
 	}
 
 	// 进入容器的网络命名空间
-	recoverFun, err := enterNetworkNameSpace(&peerLink, pid)
-	defer recoverFun()
+	recoverFunc, err := enterNetworkNameSpace(&peerLink, pid)
+	defer recoverFunc()
 	if err != nil {
 		return fmt.Errorf("enterNetworkNameSpace fail err=%s", err)
 	}
 
-	gateway.IP = containerIP
-	if err := setInterfaceIPNet(peerName, gateway.String()); err != nil {
+	peerIPNet := &net.IPNet{
+		IP:   containerIP,
+		Mask: gateway.Mask,
+	}
+	if err := setInterfaceIPNet(peerName, peerIPNet.String()); err != nil {
 		return fmt.Errorf("%v,%s", containerIP, err)
 	}
 	if err := netlink.LinkSetUp(peerLink); err != nil {

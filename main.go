@@ -53,7 +53,8 @@ func parent() {
 
 	} else {
 		common.MustLog("parent 2",
-			fs.CreateInstanceDir(containerName),
+			fs.CreateInstanceDirAndState(containerName),
+			fs.SetInstanceRunning(containerName),
 			fs.UnionMountForInstance(containerName, imageDir),
 		)
 	}
@@ -102,8 +103,11 @@ func parent() {
 		common.Signal(cmd.Process.Pid),
 	)
 
+	log.Printf("RUNNING child as PID %d\n", cmd.Process.Pid)
+
 	common.ErrLog("parent 5", cmd.Wait())
 	// 清理工作在rm中
+	common.ErrLog("parent 6", fs.SetInstanceStopped(containerName))
 }
 
 // ~ child [container name] [image path] [entry point] [args...]
@@ -118,8 +122,6 @@ func child() {
 		containerName = os.Args[2]
 		childCMD      = os.Args[4]
 	)
-
-	log.Printf("RUNNING %v as PID %d\n", childCMD, os.Getpid())
 
 	// STEP 3: 挂载文件系统 or 隔离文件系统
 	common.MustLog("child 1", fs.ChangeRootForInstance(containerName))
