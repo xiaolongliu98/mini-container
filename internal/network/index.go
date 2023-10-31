@@ -20,20 +20,17 @@ func InitBridgeAndIPPool() error {
 	if err != nil {
 		return err
 	}
+	err = IPPool.SetUsed(config.DefaultBridgeIPNet)
+	if err != nil {
+		return err
+	}
 
 	if !bridge.ExistsBridge(config.DefaultBridgeName) {
 		err = bridge.CreateBridgeAndSetSNAT(config.DefaultBridgeName, config.DefaultBridgeIPNet)
 		if err != nil {
 			return err
 		}
-		err = IPPool.SetUsed(config.DefaultBridgeIPNet)
-		if err != nil {
-			return err
-		}
-		err = IPPool.Save(config.IPPoolPath)
-		if err != nil {
-			return err
-		}
+
 	}
 	return nil
 }
