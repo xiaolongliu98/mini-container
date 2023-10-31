@@ -7,6 +7,8 @@ import (
 	"net"
 )
 
+// TODO 通过文件方式进行加锁
+
 type IPPool struct {
 	//subnetStr -> bitmap
 	m    map[string]*common.Bitmap
@@ -28,7 +30,7 @@ func NewFromDiskIfExists(path string) (*IPPool, error) {
 
 	if common.IsExistPath(path) {
 		fmt.Println("[DEBUG] IPPool path exist")
-		err := common.ReadJSON(path, &p.m)
+		err := common.ReadJSON(path, &(p.m))
 		fmt.Println("[DEBUG] pool:", p.m)
 		return p, err
 	}
@@ -36,6 +38,11 @@ func NewFromDiskIfExists(path string) (*IPPool, error) {
 	fmt.Println("[DEBUG] IPPool path not exist")
 
 	return p, nil
+}
+
+// load
+func (p *IPPool) load() error {
+	return common.ReadJSON(p.path, &(p.m))
 }
 
 func (p *IPPool) save() error {

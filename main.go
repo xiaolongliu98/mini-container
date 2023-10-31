@@ -63,6 +63,7 @@ func main() {
 		remove(containerName)
 
 	case CMDNameClear:
+		common.MustLog("init host config", container.InitHostConfig())
 		clearAll()
 
 	case CMDNameList:

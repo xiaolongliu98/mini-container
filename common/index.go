@@ -106,7 +106,7 @@ func ErrGroupCount(err ...error) (int, error) {
 
 func WriteJSON(name string, obj any) error {
 	data, _ := json.Marshal(obj)
-	return os.WriteFile(name, data, 0644)
+	return os.WriteFile(name, data, os.ModePerm)
 }
 
 func ReadJSON(name string, objPtr any) error {
