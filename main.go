@@ -245,5 +245,6 @@ func clearAll() {
 	for _, e := range containers {
 		common.ErrLog("kill and remove", e.Kill(), e.Remove())
 	}
+
 	common.ErrLog("clear config root", os.RemoveAll(config.ConfigDir))
 }

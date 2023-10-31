@@ -10,8 +10,8 @@ import (
 )
 
 func ExistsContainer(name string) bool {
-	return common.IsExistPath(filepath.Join(config.ConfigDir, name, ConfigName)) ||
-		common.IsExistPath(filepath.Join(config.ConfigDir, name, StateName))
+	return common.IsExistPath(filepath.Join(config.ContainerConfigDir, name, ConfigName)) ||
+		common.IsExistPath(filepath.Join(config.ContainerConfigDir, name, StateName))
 }
 
 // NewCreatedContainer 创建一个创建状态的容器
