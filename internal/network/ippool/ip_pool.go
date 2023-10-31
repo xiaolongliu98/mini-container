@@ -2,6 +2,7 @@ package ippool
 
 import (
 	"errors"
+	"fmt"
 	"mini-container/common"
 	"net"
 )
@@ -24,10 +25,16 @@ func NewFromDiskIfExists(path string) (*IPPool, error) {
 		m:    make(map[string]*common.Bitmap),
 		path: path,
 	}
+
 	if common.IsExistPath(path) {
+		fmt.Println("[DEBUG] IPPool path exist")
 		err := common.ReadJSON(path, &p.m)
+		fmt.Println("[DEBUG] pool:", p.m)
 		return p, err
 	}
+
+	fmt.Println("[DEBUG] IPPool path not exist")
+
 	return p, nil
 }
 
@@ -37,7 +44,6 @@ func (p *IPPool) save() error {
 
 // AllocateIP allocate an ip from the pool
 // ipNetStr: x.x.x.x/x
-// return: IP likes x.x.x.x
 func (p *IPPool) AllocateIP(subnetStr string) (*net.IPNet, error) {
 	// ip: 192.168.0.1/24
 	_, ipNet, err := net.ParseCIDR(subnetStr)

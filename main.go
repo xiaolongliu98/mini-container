@@ -94,7 +94,6 @@ func main() {
 
 // ~ run [container name] [image path] [entry point] [args...]
 func run(containerName, imageDir string, entryPoint []string) {
-	log.Printf("RUNNING parent as PID %d\n", os.Getpid())
 
 	if container.ExistsContainer(containerName) {
 		fmt.Printf("container %s already exists, you can use `~ rm %s` to remove it\n", containerName, containerName)
@@ -108,6 +107,8 @@ func run(containerName, imageDir string, entryPoint []string) {
 }
 
 func parent(ctr *container.Container) {
+	log.Printf("RUNNING parent as PID %d\n", os.Getpid())
+
 	// parent start child process
 	// equivalent: ~ child [container name]
 	cmd := exec.Command(ProcSelfExe, CMDNameChild, ctr.Config.Name)

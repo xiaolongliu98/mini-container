@@ -70,5 +70,6 @@ func ReleaseNetworkForContainer(ipNetStr string) error {
 
 func ReleaseBridge() error {
 	// TODO
+
 	return nil
 }
