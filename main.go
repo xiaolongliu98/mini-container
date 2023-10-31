@@ -39,10 +39,10 @@ Commands:
 
 // run [container name] [image path] [entry point] [args...]
 func main() {
-	common.MustLog("init host config", container.InitHostConfig())
-
 	switch os.Args[1] {
 	case CMDNameParent:
+		common.MustLog("init host config", container.InitHostConfig())
+
 		var (
 			containerName = os.Args[2]
 			imageDir      = os.Args[3]
@@ -61,11 +61,14 @@ func main() {
 			containerName = os.Args[2]
 		)
 		remove(containerName)
+
 	case CMDNameClear:
 		clearAll()
 
 	case CMDNameList:
+		common.MustLog("init host config", container.InitHostConfig())
 		list()
+
 	case CMDNameStart:
 		var (
 			containerName = os.Args[2]
