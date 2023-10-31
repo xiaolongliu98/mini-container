@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	common "mini-container/common"
+	"mini-container/config"
 	"mini-container/container"
 	"os"
 	"os/exec"
@@ -19,6 +20,7 @@ const (
 	CMDNameList   = "ls"
 	CMDNameStart  = "start"
 	CMDNameStop   = "stop"
+	CMDNameClear  = "clear"
 	CMDNameHelp1  = "--help"
 	CMDNameHelp2  = "-h"
 
@@ -30,7 +32,8 @@ Commands:
 ~ start [container name]										start a stopped or created container
 ~ stop [container name]											stop a running container
 ~ ls															list containers and their information 
-~ rm [container name] 											remove a container																														
+~ rm [container name] 											remove a container
+~ clear															remove all containers		
 `
 )
 
@@ -58,6 +61,8 @@ func main() {
 			containerName = os.Args[2]
 		)
 		remove(containerName)
+	case CMDNameClear:
+		clearAll()
 
 	case CMDNameList:
 		list()
@@ -232,4 +237,13 @@ func stop(containerName string) {
 	}
 
 	common.ErrLog("stop", ctr.Kill())
+}
+
+func clearAll() {
+	containers, err := container.ListContainers()
+	common.MustLog("list", err)
+	for _, e := range containers {
+		common.ErrLog("kill and remove", e.Kill(), e.Remove())
+	}
+	common.ErrLog("clear config root", os.RemoveAll(config.ConfigDir))
 }
