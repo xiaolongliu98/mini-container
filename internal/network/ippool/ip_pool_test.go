@@ -2,6 +2,7 @@ package ippool
 
 import (
 	"github.com/stretchr/testify/assert"
+	"net"
 	"os"
 	"testing"
 )
@@ -9,7 +10,7 @@ import (
 // TestIPPoolWrite
 func TestIPPoolWrite(t *testing.T) {
 	var err error
-	var ip string
+	var ip *net.IPNet
 	pool := New()
 
 	ip, err = pool.AllocateIP("192.168.0.0/24")
@@ -28,7 +29,7 @@ func TestIPPoolWrite(t *testing.T) {
 	}
 	t.Log(ip)
 
-	err = pool.ReleaseIP("192.168.0.2/24")
+	err = pool.ReleaseIPStr("192.168.0.2/24")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -78,7 +79,7 @@ func TestIPPoolWrite(t *testing.T) {
 // TestIPPoolRead
 func TestIPPoolRead(t *testing.T) {
 	var err error
-	pool, err := NewFromDisk("./ip_pool.json")
+	pool, err := NewFromDiskIfExists("./ip_pool.json")
 	if err != nil {
 		t.Fatal(err)
 	}

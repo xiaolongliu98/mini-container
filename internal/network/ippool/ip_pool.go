@@ -15,9 +15,9 @@ func New() *IPPool {
 	return &IPPool{m: make(map[string]*common.Bitmap)}
 }
 
-func NewFromDisk(path string) (*IPPool, error) {
+func NewFromDiskIfExists(path string) (*IPPool, error) {
 	p := &IPPool{m: make(map[string]*common.Bitmap)}
-	if common.IsExist(path) {
+	if common.IsExistPath(path) {
 		err := common.ReadJSON(path, &p.m)
 		return p, err
 	}
@@ -31,11 +31,11 @@ func (p *IPPool) Save(path string) error {
 // AllocateIP allocate an ip from the pool
 // ipNetStr: x.x.x.x/x
 // return: IP likes x.x.x.x
-func (p *IPPool) AllocateIP(subnetStr string) (string, error) {
+func (p *IPPool) AllocateIP(subnetStr string) (*net.IPNet, error) {
 	// ip: 192.168.0.1/24
 	_, ipNet, err := net.ParseCIDR(subnetStr)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	subnetStr = ipNet.String()
@@ -50,7 +50,7 @@ func (p *IPPool) AllocateIP(subnetStr string) (string, error) {
 	}
 
 	if bm.Ones() >= bm.Cap()-2 {
-		return "", errors.New("no available ip")
+		return nil, errors.New("no available IP")
 	}
 
 	unsetPos := bm.GetFirstUnset(1)
@@ -66,12 +66,13 @@ func (p *IPPool) AllocateIP(subnetStr string) (string, error) {
 	ip[2] = byte(ipUint32 >> 8)
 	ip[3] = byte(ipUint32)
 
-	return ip.String(), nil
+	ipNet.IP = ip
+	return ipNet, nil
 }
 
-// ReleaseIP release an ip to the pool
+// ReleaseIPStr release an ip to the pool
 // ipNetStr: x.x.x.x/x
-func (p *IPPool) ReleaseIP(ipNetStr string) error {
+func (p *IPPool) ReleaseIPStr(ipNetStr string) error {
 	ip, ipNet, err := net.ParseCIDR(ipNetStr)
 	if err != nil {
 		return err
@@ -92,6 +93,11 @@ func (p *IPPool) ReleaseIP(ipNetStr string) error {
 
 	bm.Unset(int(pos))
 	return nil
+}
+
+// ReleaseIP release an ip to the pool
+func (p *IPPool) ReleaseIP(ipNet *net.IPNet) error {
+	return p.ReleaseIPStr(ipNet.String())
 }
 
 // IsAvailable check if an ip is available
