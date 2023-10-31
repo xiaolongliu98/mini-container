@@ -129,6 +129,8 @@ func (c *Container) IsRunning() bool {
 	if common.IsExistProc(c.State.ChildPID) {
 		return true
 	}
+
+	fmt.Println("[DEBUG] child process not exist")
 	// update
 	if err := c.SetStopped(); err != nil {
 		common.ErrLog("update container state", err)
