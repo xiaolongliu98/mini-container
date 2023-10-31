@@ -105,9 +105,9 @@ func (c *Container) SetStopped() error {
 	return c.State.Save()
 }
 
-// ConfigChildNetworkForParent 配置容器的网络
+// ConfigChildNetworkInParent 配置容器的网络
 // 调用该方法前你需要保证child进程已经启动，并且已经调用 SetRunning
-func (c *Container) ConfigChildNetworkForParent() error {
+func (c *Container) ConfigChildNetworkInParent() error {
 	ipNet, err := network.ConfigNetworkForContainer(c.State.ChildPID)
 	if err != nil {
 		return err

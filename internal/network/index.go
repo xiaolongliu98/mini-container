@@ -51,7 +51,7 @@ func ConfigNetworkForContainer(pid int) (*net.IPNet, error) {
 	}
 
 	// 主机上创建 veth 设备,并连接到网桥上
-	randPart := rand.Intn(9000) + 1000 // 1000~9999
+	randPart := rand.Intn(900) + 100 // 100~999
 	vethName := fmt.Sprintf("%d-%d", pid, randPart)
 
 	peerName, err := bridge.CreateVeth(config.DefaultBridgeName, vethName)

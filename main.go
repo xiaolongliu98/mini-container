@@ -139,7 +139,7 @@ func parent(ctr *container.Container) {
 
 	common.MustLog("parent config child",
 		ctr.SetRunning(os.Getpid(), cmd.Process.Pid),
-		ctr.ConfigChildNetworkForParent(),
+		ctr.ConfigChildNetworkInParent(),
 		common.Signal(cmd.Process.Pid),
 	)
 
