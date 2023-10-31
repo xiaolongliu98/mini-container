@@ -8,15 +8,22 @@ import (
 
 type IPPool struct {
 	//subnetStr -> bitmap
-	m map[string]*common.Bitmap
+	m    map[string]*common.Bitmap
+	path string
 }
 
-func New() *IPPool {
-	return &IPPool{m: make(map[string]*common.Bitmap)}
+func New(path string) *IPPool {
+	return &IPPool{
+		m:    make(map[string]*common.Bitmap),
+		path: path,
+	}
 }
 
 func NewFromDiskIfExists(path string) (*IPPool, error) {
-	p := &IPPool{m: make(map[string]*common.Bitmap)}
+	p := &IPPool{
+		m:    make(map[string]*common.Bitmap),
+		path: path,
+	}
 	if common.IsExistPath(path) {
 		err := common.ReadJSON(path, &p.m)
 		return p, err
@@ -24,8 +31,8 @@ func NewFromDiskIfExists(path string) (*IPPool, error) {
 	return p, nil
 }
 
-func (p *IPPool) Save(path string) error {
-	return common.WriteJSON(path, p.m)
+func (p *IPPool) save() error {
+	return common.WriteJSON(p.path, p.m)
 }
 
 // AllocateIP allocate an ip from the pool
@@ -67,7 +74,7 @@ func (p *IPPool) AllocateIP(subnetStr string) (*net.IPNet, error) {
 	ip[3] = byte(ipUint32)
 
 	ipNet.IP = ip
-	return ipNet, nil
+	return ipNet, p.save()
 }
 
 // ReleaseIPStr release an ip to the pool
@@ -92,7 +99,7 @@ func (p *IPPool) ReleaseIPStr(ipNetStr string) error {
 	pos := ipUint32 & ((1 << uint(32-ones)) - 1)
 
 	bm.Unset(int(pos))
-	return nil
+	return p.save()
 }
 
 // ReleaseIP release an ip to the pool
@@ -150,5 +157,9 @@ func (p *IPPool) SetUsed(ipNetStr string) error {
 	// get ip pos
 	ipUint32 := uint32(ip[0])<<24 | uint32(ip[1])<<16 | uint32(ip[2])<<8 | uint32(ip[3])
 	pos := ipUint32 & ((1 << uint(32-ones)) - 1)
-	return bm.Set(int(pos))
+
+	if err = bm.Set(int(pos)); err != nil {
+		return err
+	}
+	return p.save()
 }

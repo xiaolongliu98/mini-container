@@ -11,7 +11,7 @@ import (
 func TestIPPoolWrite(t *testing.T) {
 	var err error
 	var ip *net.IPNet
-	pool := New()
+	pool := New("./ip_pool.json")
 
 	ip, err = pool.AllocateIP("192.168.0.0/24")
 	if err != nil {
@@ -70,10 +70,6 @@ func TestIPPoolWrite(t *testing.T) {
 	}
 	t.Log(ip)
 
-	err = pool.Save("./ip_pool.json")
-	if err != nil {
-		t.Fatal(err)
-	}
 }
 
 // TestIPPoolRead

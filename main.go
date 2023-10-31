@@ -70,16 +70,19 @@ func main() {
 		list()
 
 	case CMDNameStart:
+		common.MustLog("init host config", container.InitHostConfig())
 		var (
 			containerName = os.Args[2]
 		)
 		start(containerName)
 
 	case CMDNameStop:
+		common.MustLog("init host config", container.InitHostConfig())
 		var (
 			containerName = os.Args[2]
 		)
 		stop(containerName)
+
 	case CMDNameHelp1, CMDNameHelp2:
 		fmt.Println(HelpText)
 
@@ -178,9 +181,9 @@ func list() {
 	common.MustLog("list", err)
 
 	// Name	Image Status
-	fmt.Printf("%v\t%v\t\t\t%v\t\t%v\t%v\n", "Name", "Image", "Status", "IP", "CPID")
+	fmt.Printf("%v\t%v\t\t\t%v\t\t%v\t\t\t%v\n", "Name", "Image", "Status", "IP", "CPID")
 	for _, e := range containers {
-		fmt.Printf("%v\t%v\t\t\t%v\t\t%v\t%v\n",
+		fmt.Printf("%v\t%v\t\t\t%v\t\t%v\t\t\t%v\n",
 			e.Config.Name, e.Config.ImageDir, e.GetLifeCycle(), e.State.IPNet.String(), e.State.ChildPID)
 	}
 

@@ -43,9 +43,6 @@ func ConfigNetworkForContainer(pid int) (*net.IPNet, error) {
 	if err != nil {
 		return nil, fmt.Errorf("alloc allocateIPNet fail %s", err)
 	}
-	if err := IPPool.Save(config.IPPoolPath); err != nil {
-		return nil, fmt.Errorf("save allocateIPNet fail %s", err)
-	}
 
 	// 主机上创建 veth 设备,并连接到网桥上
 	randPart := rand.Intn(900) + 100 // 100~999
@@ -68,10 +65,7 @@ func ConfigNetworkForContainer(pid int) (*net.IPNet, error) {
 
 // ReleaseNetworkForContainer 释放容器IP配置
 func ReleaseNetworkForContainer(ipNetStr string) error {
-	if err := IPPool.ReleaseIPStr(ipNetStr); err != nil {
-		return err
-	}
-	return IPPool.Save(config.IPPoolPath)
+	return IPPool.ReleaseIPStr(ipNetStr)
 }
 
 func ReleaseBridge() error {
