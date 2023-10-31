@@ -73,6 +73,23 @@ func (c *Container) SetRunning(parentPID, childPID int) error {
 	return c.State.Save()
 }
 
+// Kill 强制停止容器
+func (c *Container) Kill() error {
+	if !c.IsRunning() {
+		return nil
+	}
+
+	err := common.ErrTag("kill",
+		common.ErrTag("child process", common.KillProc(c.State.ChildPID)),
+		common.ErrTag("parent process", common.KillProc(c.State.ParentPID)),
+	)
+	if err != nil {
+		return err
+	}
+
+	return c.SetStopped()
+}
+
 func (c *Container) SetStopped() error {
 	c.State.LifeCycle = Stopped
 	c.State.ParentPID = 0

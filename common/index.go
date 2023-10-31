@@ -151,3 +151,12 @@ func IsExistProc(pid int) bool {
 	// which means the process might still exist.
 	return true
 }
+
+// KillProc 强制杀死进程
+func KillProc(pid int) error {
+	process, err := os.FindProcess(pid)
+	if err != nil {
+		return err
+	}
+	return process.Kill()
+}

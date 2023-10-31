@@ -231,5 +231,5 @@ func stop(containerName string) {
 		return
 	}
 
-	common.ErrLog("stop", ctr.SetStopped())
+	common.ErrLog("stop", ctr.Kill())
 }
