@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	common "mini-container/common"
 	"mini-container/config"
 	"mini-container/container"
@@ -114,7 +113,7 @@ func run(containerName, imageDir string, entryPoint []string) {
 }
 
 func parent(ctr *container.Container) {
-	log.Printf("RUNNING parent as PID %d\n", os.Getpid())
+	fmt.Printf("RUNNING parent as PID %d\n", os.Getpid())
 
 	// parent start child process
 	// equivalent: ~ child [container name]
@@ -157,7 +156,7 @@ func parent(ctr *container.Container) {
 		common.Signal(cmd.Process.Pid),
 	)
 
-	log.Printf("RUNNING child as PID %d\n", cmd.Process.Pid)
+	fmt.Printf("RUNNING child as PID %d\n", cmd.Process.Pid)
 
 	common.ErrLog("parent wait", cmd.Wait())
 	// 清理工作在rm中

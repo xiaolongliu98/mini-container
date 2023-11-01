@@ -143,7 +143,7 @@ func (c *Container) IsRunning() bool {
 		return true
 	}
 
-	fmt.Println("[DEBUG] child process not exist")
+	//fmt.Println("[DEBUG] child process not exist")
 	// update
 	if err := c.SetStopped(); err != nil {
 		common.ErrLog("update container state", err)

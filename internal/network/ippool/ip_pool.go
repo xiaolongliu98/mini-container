@@ -2,7 +2,6 @@ package ippool
 
 import (
 	"errors"
-	"fmt"
 	"mini-container/common"
 	"net"
 )
@@ -22,7 +21,7 @@ func New(path string) (*IPPool, error) {
 	}
 
 	if !common.IsExistPath(path) {
-		fmt.Println("[DEBUG New]", pool.m)
+		//fmt.Println("[DEBUG New]", pool.m)
 		return pool, pool.save()
 	}
 
@@ -36,12 +35,12 @@ func (p *IPPool) load() error {
 	}
 
 	err := common.ReadJSON(p.path, &(p.m))
-	fmt.Println("[DEBUG load]", p.m)
+	//fmt.Println("[DEBUG load]", p.m)
 	return err
 }
 
 func (p *IPPool) save() error {
-	fmt.Println("[DEBUG save]", p.m)
+	//fmt.Println("[DEBUG save]", p.m)
 	return common.WriteJSONSync(p.path, p.m)
 }
 
@@ -51,7 +50,7 @@ func (p *IPPool) AllocateIP(subnetStr string) (*net.IPNet, error) {
 	if err := p.load(); err != nil {
 		return nil, err
 	}
-	fmt.Println("[DEBUG AllocateIP]", p.m)
+	//fmt.Println("[DEBUG AllocateIP]", p.m)
 	// ip: 192.168.0.1/24
 	_, ipNet, err := net.ParseCIDR(subnetStr) // ipNet: 192.168.0.0/24
 	if err != nil {
@@ -96,7 +95,7 @@ func (p *IPPool) ReleaseIPStr(ipNetStr string) error {
 	if err := p.load(); err != nil {
 		return err
 	}
-	fmt.Println("[DEBUG ReleaseIPStr]", p.m)
+	//fmt.Println("[DEBUG ReleaseIPStr]", p.m)
 	ip, ipNet, err := net.ParseCIDR(ipNetStr)
 	if err != nil {
 		return err
@@ -130,7 +129,7 @@ func (p *IPPool) IsAvailable(ipNetStr string) (bool, error) {
 	if err := p.load(); err != nil {
 		return false, err
 	}
-	fmt.Println("[DEBUG IsAvailable]", p.m)
+	//fmt.Println("[DEBUG IsAvailable]", p.m)
 	ip, ipNet, err := net.ParseCIDR(ipNetStr)
 	if err != nil {
 		return false, err
@@ -161,7 +160,7 @@ func (p *IPPool) SetUsed(ipNetStr string) error {
 	if err := p.load(); err != nil {
 		return err
 	}
-	fmt.Println("[DEBUG SetUsed]", p.m)
+	//fmt.Println("[DEBUG SetUsed]", p.m)
 	ip, ipNet, err := net.ParseCIDR(ipNetStr)
 	if err != nil {
 		return err
@@ -186,6 +185,6 @@ func (p *IPPool) SetUsed(ipNetStr string) error {
 	if err = bm.Set(int(pos)); err != nil {
 		return err
 	}
-	fmt.Println("[DEBUG SetUsed2]", p.m)
+	//fmt.Println("[DEBUG SetUsed2]", p.m)
 	return p.save()
 }
