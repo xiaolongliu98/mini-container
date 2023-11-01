@@ -22,6 +22,7 @@ func New(path string) (*IPPool, error) {
 	}
 
 	if !common.IsExistPath(path) {
+		fmt.Println("[DEBUG New]", pool.m)
 		return pool, pool.save()
 	}
 
