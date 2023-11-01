@@ -31,9 +31,9 @@ Commands:
 ~ run [container name] [image path] [entry point] [args...]		create and start a container
 ~ start [container name]						start a stopped or created container
 ~ stop [container name]							stop a running container
-~ ls									list containers and their information 
+~ ls									list containers and their information
 ~ rm [container name] 							remove a container
-~ clear															remove all containers		
+~ clear									remove all containers
 `
 )
 
