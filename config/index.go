@@ -19,5 +19,5 @@ const (
 // Network
 const (
 	DefaultBridgeName  = "mini-ctr0"
-	DefaultBridgeIPNet = "192.172.0.1/24"
+	DefaultBridgeIPNet = "192.172.0.1/24" // "192.172.0.2/24"
 )

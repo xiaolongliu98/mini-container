@@ -34,6 +34,7 @@ func (b *Bitmap) Set(pos int) error {
 	if pos >= len(b.arr)<<3 {
 		b.arr = append(b.arr, make([]byte, ((pos>>3)+1)-len(b.arr))...)
 	}
+	// &0x7 == %8
 	if b.arr[pos>>3]&(1<<uint(pos&0x7)) == 0 {
 		b.ones++
 		b.arr[pos>>3] |= 1 << uint(pos&0x7)
@@ -68,7 +69,7 @@ func (b *Bitmap) GetFirstUnset(start ...int) int {
 	j := start[0] & 0x7 // start[0] % 8
 
 	for ; i < len(b.arr); i++ {
-		if b.arr[i] == 0xff {
+		if b.arr[i] == 0b11111111 {
 			j = 0
 			continue
 		}

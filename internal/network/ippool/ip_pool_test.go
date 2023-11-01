@@ -18,12 +18,12 @@ func TestIPPoolWrite(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Log(ip)
-	ip, err = pool.AllocateIP("192.168.0.0/24")
+	ip, err = pool.AllocateIP("192.168.0.1/24")
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Log(ip)
-	ip, err = pool.AllocateIP("192.168.0.0/24")
+	ip, err = pool.AllocateIP("192.168.0.2/24")
 	if err != nil {
 		t.Fatal(err)
 	}
