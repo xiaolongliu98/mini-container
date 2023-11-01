@@ -41,6 +41,7 @@ func (p *IPPool) load() error {
 }
 
 func (p *IPPool) save() error {
+	fmt.Println("[DEBUG save]", p.m)
 	return common.WriteJSONSync(p.path, p.m)
 }
 
@@ -185,5 +186,6 @@ func (p *IPPool) SetUsed(ipNetStr string) error {
 	if err = bm.Set(int(pos)); err != nil {
 		return err
 	}
+	fmt.Println("[DEBUG SetUsed2]", p.m)
 	return p.save()
 }
