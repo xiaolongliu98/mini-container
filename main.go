@@ -249,7 +249,7 @@ func stop(containerName string) {
 
 func clearAll() {
 	containers, err := container.ListContainers()
-	common.MustLog("list", err)
+	common.ErrLog("list", err)
 	for _, e := range containers {
 		common.ErrLog("kill and remove", e.Kill(), e.Remove())
 	}
