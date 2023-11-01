@@ -29,6 +29,7 @@ const (
 
 Commands:
 ~ run [container name] [image path] [entry point] [args...]		create and start a container
+    	For example: ./mini-container run test1 / /bin/sh
 ~ start [container name]						start a stopped or created container
 ~ stop [container name]							stop a running container
 ~ ls									list containers and their information
