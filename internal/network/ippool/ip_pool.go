@@ -171,7 +171,7 @@ func (p *IPPool) SetUsed(ipNetStr string) error {
 	ip = ip.To4()
 	ones, _ := ipNet.Mask.Size()
 
-	bm, ok := p.m[ipNetStr]
+	bm, ok := p.m[subnetStr]
 	if !ok {
 
 		validIPs := 1 << uint(32-ones)
