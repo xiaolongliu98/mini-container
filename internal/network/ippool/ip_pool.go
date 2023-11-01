@@ -2,7 +2,6 @@ package ippool
 
 import (
 	"errors"
-	"fmt"
 	"mini-container/common"
 	"net"
 )
@@ -15,33 +14,44 @@ type IPPool struct {
 	path string
 }
 
-func New(path string) *IPPool {
-	return &IPPool{
-		m:    make(map[string]*common.Bitmap),
-		path: path,
-	}
-}
-
-func NewFromDiskIfExists(path string) (*IPPool, error) {
-	p := &IPPool{
+func New(path string) (*IPPool, error) {
+	pool := &IPPool{
 		m:    make(map[string]*common.Bitmap),
 		path: path,
 	}
 
-	if common.IsExistPath(path) {
-		fmt.Println("[DEBUG] IPPool path exist")
-		err := common.ReadJSON(path, &(p.m))
-		fmt.Println("[DEBUG] pool:", p.m)
-		return p, err
+	if !common.IsExistPath(path) {
+		return pool, pool.save()
 	}
 
-	fmt.Println("[DEBUG] IPPool path not exist")
-
-	return p, nil
+	return pool, nil
 }
+
+//
+//func NewFromDiskIfExists(path string) (*IPPool, error) {
+//	p := &IPPool{
+//		m:    make(map[string]*common.Bitmap),
+//		path: path,
+//	}
+//
+//	if common.IsExistPath(path) {
+//		fmt.Println("[DEBUG] IPPool path exist")
+//		err := common.ReadJSON(path, &(p.m))
+//		fmt.Println("[DEBUG] pool:", p.m)
+//		return p, err
+//	}
+//
+//	fmt.Println("[DEBUG] IPPool path not exist")
+//
+//	return p, nil
+//}
 
 // load
 func (p *IPPool) load() error {
+	if !common.IsExistPath(p.path) {
+		return nil
+	}
+
 	return common.ReadJSON(p.path, &(p.m))
 }
 
@@ -52,6 +62,10 @@ func (p *IPPool) save() error {
 // AllocateIP allocate an ip from the pool
 // ipNetStr: x.x.x.x/x
 func (p *IPPool) AllocateIP(subnetStr string) (*net.IPNet, error) {
+	if err := p.load(); err != nil {
+		return nil, err
+	}
+
 	// ip: 192.168.0.1/24
 	_, ipNet, err := net.ParseCIDR(subnetStr)
 	if err != nil {
@@ -93,6 +107,10 @@ func (p *IPPool) AllocateIP(subnetStr string) (*net.IPNet, error) {
 // ReleaseIPStr release an ip to the pool
 // ipNetStr: x.x.x.x/x
 func (p *IPPool) ReleaseIPStr(ipNetStr string) error {
+	if err := p.load(); err != nil {
+		return err
+	}
+
 	ip, ipNet, err := net.ParseCIDR(ipNetStr)
 	if err != nil {
 		return err
@@ -122,10 +140,14 @@ func (p *IPPool) ReleaseIP(ipNet *net.IPNet) error {
 
 // IsAvailable check if an ip is available
 // ipNetStr: x.x.x.x/x
-func (p *IPPool) IsAvailable(ipNetStr string) bool {
+func (p *IPPool) IsAvailable(ipNetStr string) (bool, error) {
+	if err := p.load(); err != nil {
+		return false, err
+	}
+
 	ip, ipNet, err := net.ParseCIDR(ipNetStr)
 	if err != nil {
-		return false
+		return false, err
 	}
 
 	ipNetStr = ipNet.String()
@@ -137,19 +159,23 @@ func (p *IPPool) IsAvailable(ipNetStr string) bool {
 	pos := ipUint32 & ((1 << uint(32-ones)) - 1)
 	validIPs := 1 << uint(32-ones)
 	if pos == 0 || pos == uint32(validIPs-1) {
-		return false
+		return false, nil
 	}
 
 	bm, ok := p.m[ipNetStr]
 	if !ok {
-		return true
+		return true, nil
 	}
-	return !bm.Get(int(pos))
+	return !bm.Get(int(pos)), nil
 }
 
 // SetUsed set an ip to used
 // ipNetStr: x.x.x.x/x
 func (p *IPPool) SetUsed(ipNetStr string) error {
+	if err := p.load(); err != nil {
+		return err
+	}
+
 	ip, ipNet, err := net.ParseCIDR(ipNetStr)
 	if err != nil {
 		return err

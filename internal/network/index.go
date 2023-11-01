@@ -16,7 +16,7 @@ var (
 // InitBridgeAndIPPool 初始化宿主机网桥，读取IP Pool文件
 func InitBridgeAndIPPool() error {
 	var err error
-	IPPool, err = ippool.NewFromDiskIfExists(config.IPPoolPath)
+	IPPool, err = ippool.New(config.IPPoolPath)
 	if err != nil {
 		return err
 	}
