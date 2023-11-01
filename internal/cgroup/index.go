@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 )
 
 type CgroupType string
@@ -26,14 +27,31 @@ type ICgroup interface {
 }
 
 func Apply(cg ICgroup, childPID int) error {
-	if Applied(cg) {
+	applied, err := Applied(cg, childPID)
+	if err != nil {
+		return err
+	}
+	if applied {
 		return nil
 	}
+	if err = Release(cg); err != nil {
+		return err
+	}
+
 	return cg.Apply(childPID)
 }
 
-func Applied(cg ICgroup) bool {
-	return common.IsExistPath(CgroupPath(cg))
+func Applied(cg ICgroup, childPID int) (bool, error) {
+	path := filepath.Join(CgroupPath(cg), string(cg.Type()), "tasks")
+	if !common.IsExistPath(path) {
+		return false, nil
+	}
+
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return false, err
+	}
+	return string(data) == strconv.Itoa(childPID), nil
 }
 
 func Release(cg ICgroup) error {
@@ -51,6 +69,7 @@ func createCgroup(name string) error {
 	return err
 }
 
+// TODO 可能需要处理未找到的错误情况，这种情况视为无错误
 func clearCgroup(name string, cgroupType CgroupType) error {
 	output, err := exec.Command("cgdelete", "-r", fmt.Sprintf("%s:%s/%s", cgroupType, config.ProjName, name)).Output()
 	if err != nil {
