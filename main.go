@@ -63,6 +63,7 @@ func main() {
 		child(containerName)
 
 	case CMDNameRemove:
+		common.MustLog("init host config", container.InitHostConfig())
 		var (
 			containerName = os.Args[2]
 		)

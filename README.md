@@ -11,7 +11,7 @@
 1. linux namespace 命名空间
 2. linux union fs 联合文件系统 
 3. linux cgroup 资源控制组
-4. linux chroot 文件根目录隔离
+4. linux 文件根目录隔离
 5. linux network知识，包括veth、bridge等
 
 
@@ -56,4 +56,4 @@
 # Next
 
 1. 宿主机端口映射
-2. 引入cobra，增加更多可选命令（主要为增加cgroup参数，目前未使用）
+2. 引入cobra，增加更多可选命令（主要为增加cgroup参数，目前cgroup功能还未使用）
