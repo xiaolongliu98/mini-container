@@ -56,7 +56,7 @@ func (p *IPPool) load() error {
 }
 
 func (p *IPPool) save() error {
-	return common.WriteJSON(p.path, p.m)
+	return common.WriteJSONSync(p.path, p.m)
 }
 
 // AllocateIP allocate an ip from the pool

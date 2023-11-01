@@ -37,7 +37,7 @@ func (cc *ContainerConfig) Load() error {
 }
 
 func (cc *ContainerConfig) Save() error {
-	return common.WriteJSON(filepath.Join(config.ContainerConfigDir, cc.Name, ConfigName), cc)
+	return common.WriteJSONSync(filepath.Join(config.ContainerConfigDir, cc.Name, ConfigName), cc)
 }
 
 // ContainerState 容器状态
@@ -56,7 +56,7 @@ func (cs *ContainerState) Load() error {
 }
 
 func (cs *ContainerState) Save() error {
-	return common.WriteJSON(filepath.Join(config.ContainerConfigDir, cs.Name, StateName), cs)
+	return common.WriteJSONSync(filepath.Join(config.ContainerConfigDir, cs.Name, StateName), cs)
 }
 
 type Container struct {

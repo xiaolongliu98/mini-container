@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"syscall"
+	"time"
 )
 
 const (
@@ -254,5 +255,7 @@ func clearAll() {
 		common.ErrLog("kill and remove", e.Kill(), e.Remove())
 	}
 
+	common.ErrLog("clear config root", os.RemoveAll(config.ConfigDir))
+	time.Sleep(time.Millisecond * 100)
 	common.ErrLog("clear config root", os.RemoveAll(config.ConfigDir))
 }
