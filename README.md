@@ -1,6 +1,6 @@
 # mini-container
 
-一个简单的、迷你的容器技术探索项目
+一个简单的、迷你的容器技术探索项目（1600+行Go代码）
 
  **参考和致谢（含视频讲解）**：https://github.com/HobbyBear/tinydocker
 

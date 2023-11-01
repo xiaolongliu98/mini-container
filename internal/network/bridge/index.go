@@ -9,7 +9,6 @@ import (
 	"os/exec"
 	"runtime"
 	"strings"
-	"time"
 )
 
 func truncate(maxLen int, str string) string {
@@ -120,33 +119,7 @@ func enterNetworkNameSpace(vethLink *netlink.Link, pid int) (func(), error) {
 }
 
 // setInterfaceIPNet 用于设置网络接口的IP地址
-func setInterfaceIPNet(name string, ipNetStr string) error {
-	retries := 2
-	var iface netlink.Link
-	var err error
-
-	for i := 0; i < retries; i++ {
-		iface, err = netlink.LinkByName(name)
-		if err == nil {
-			break
-		}
-		fmt.Println(fmt.Errorf("error retrieving new bridge netlink link [ %s ]... retrying", name))
-		time.Sleep(2 * time.Second)
-	}
-
-	if err != nil {
-		return fmt.Errorf("abandoning retrieving the new bridge link from netlink, Run [ ip link ] to troubleshoot the error: %v\n", err)
-	}
-	ipNet, err := ParseIPNet(ipNetStr)
-	if err != nil {
-		return err
-	}
-	addr := &netlink.Addr{IPNet: ipNet, Peer: ipNet, Label: "", Flags: 0, Scope: 0}
-	return netlink.AddrAdd(iface, addr)
-}
-
-// setInterfaceIPNet 用于设置网络接口的IP地址
-func setInterfaceIPNet2(iface netlink.Link, ipNet *net.IPNet) error {
+func setInterfaceIPNet(iface netlink.Link, ipNet *net.IPNet) error {
 	addr := &netlink.Addr{IPNet: ipNet, Peer: ipNet, Label: "", Flags: 0, Scope: 0}
 	return netlink.AddrAdd(iface, addr)
 }
@@ -235,10 +208,8 @@ func SetContainerIP(peerName string, pid int, containerIP net.IP, gateway *net.I
 		IP:   containerIP,
 		Mask: gateway.Mask,
 	}
-	//if err := setInterfaceIPNet(peerName, peerIPNet.String()); err != nil {
-	//	return fmt.Errorf("%v,%s", containerIP, err)
-	//}
-	if err := setInterfaceIPNet2(peerLink, peerIPNet); err != nil {
+
+	if err := setInterfaceIPNet(peerLink, peerIPNet); err != nil {
 		return fmt.Errorf("%v,%s", containerIP, err)
 	}
 	if err := netlink.LinkSetUp(peerLink); err != nil {

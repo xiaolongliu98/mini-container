@@ -104,6 +104,7 @@ func ListContainers() ([]*Container, error) {
 }
 
 // RemoveContainerForce 强制删除容器
+// 注意：该删除方法不涉及删除cgroups
 func RemoveContainerForce(name string) error {
 	return common.ErrTag("clear container",
 		fs.UnionUnmountForContainer(name),
