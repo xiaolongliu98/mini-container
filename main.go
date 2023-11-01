@@ -26,7 +26,7 @@ const (
 	CMDNameHelp2  = "-h"
 
 	HelpText = `
-# mini-container --help
+# mini-container --help/-h
 
 Commands:
 ~ run [container name] [image path] [entry point] [args...]		create and start a container
@@ -40,6 +40,11 @@ Commands:
 
 // run [container name] [image path] [entry point] [args...]
 func main() {
+	if len(os.Args) < 2 {
+		fmt.Println(HelpText)
+		return
+	}
+
 	switch os.Args[1] {
 	case CMDNameParent:
 		common.MustLog("init host config", container.InitHostConfig())
@@ -140,14 +145,14 @@ func parent(ctr *container.Container) {
 	waitFunc := common.NewWaitSignalChannel()
 	// Start 异步启动， Run 同步启动
 	common.MustLog("parent start child", cmd.Start())
-	// TODO child进程初始化完毕后，再执行下方
-	// TODO 设置Cgroups
-	// 设置network
-	// 等待子进程启动完毕
+	// child进程初始化完毕后，再执行下方
 	waitFunc()
 
+	// 设置cgroups
+	// 设置network
 	common.MustLog("parent config child",
 		ctr.SetRunning(os.Getpid(), cmd.Process.Pid),
+		ctr.ConfigChildCgroupsInParent(),
 		ctr.ConfigChildNetworkInParent(),
 		common.Signal(cmd.Process.Pid),
 	)
@@ -201,6 +206,8 @@ func remove(containerName string) {
 			fmt.Printf("container %s is running, you can use `~ stop %s` to stop it\n", containerName, containerName)
 			return
 		}
+		common.MustLog("remove", ctr.Remove())
+		return
 	}
 
 	common.ErrLog("remove", container.RemoveContainerForce(containerName))

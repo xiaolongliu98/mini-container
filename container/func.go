@@ -3,6 +3,7 @@ package container
 import (
 	"mini-container/common"
 	"mini-container/config"
+	"mini-container/internal/cgroup"
 	"mini-container/internal/fs"
 	"mini-container/internal/network"
 	"os"
@@ -21,6 +22,7 @@ func NewCreatedContainer(name, imageDir string, entryPoint []string) (*Container
 		Name:            name,
 		ImageDir:        imageDir,
 		ChildEntryPoint: entryPoint,
+		Cgroups:         make([]cgroup.ICgroup, 0),
 	}
 	cs := &ContainerState{
 		Name:         name,

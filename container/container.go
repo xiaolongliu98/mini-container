@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"mini-container/common"
 	"mini-container/config"
+	"mini-container/internal/cgroup"
 	"mini-container/internal/fs"
 	"mini-container/internal/network"
 	"net"
@@ -27,9 +28,10 @@ const (
 // ContainerConfig 容器配置
 // ~/.mini-container/config/<container name>/config.json
 type ContainerConfig struct {
-	Name            string   `json:"name"`
-	ImageDir        string   `json:"imageDir"`
-	ChildEntryPoint []string `json:"childEntryPoint"`
+	Name            string           `json:"name"`
+	ImageDir        string           `json:"imageDir"`
+	ChildEntryPoint []string         `json:"childEntryPoint"`
+	Cgroups         []cgroup.ICgroup `json:"cgroups"`
 }
 
 func (cc *ContainerConfig) Load() error {
@@ -116,6 +118,17 @@ func (c *Container) ConfigChildNetworkInParent() error {
 	return c.State.Save()
 }
 
+// ConfigChildCgroupsInParent 配置容器的cgroups
+// 调用该方法前你需要保证child进程已经启动，并且已经调用 SetRunning
+func (c *Container) ConfigChildCgroupsInParent() error {
+	for _, cg := range c.Config.Cgroups {
+		if err := cgroup.Apply(cg, c.State.ChildPID); err != nil {
+			return common.ErrTag("apply cgroup", err)
+		}
+	}
+	return nil
+}
+
 func (c *Container) ConfigRootfsForChild() error {
 	return fs.ChangeRootForContainer(c.Config.Name)
 }
@@ -162,6 +175,12 @@ func (c *Container) Remove() error {
 	if c.IsRunning() {
 		return fmt.Errorf("container %s is running", c.Config.Name)
 	}
+	// 释放cgroups
+	for _, cg := range c.Config.Cgroups {
+		if err := cgroup.Release(cg); err != nil {
+			return common.ErrTag("release cgroup", err)
+		}
+	}
 	return RemoveContainerForce(c.Config.Name)
 }
 
@@ -176,4 +195,16 @@ func (c *Container) FixCreatedToStopped() error {
 
 	c.State.LifeCycle = Stopped
 	return c.State.Save()
+}
+
+// AddCgroup 添加cgroup
+func (c *Container) AddCgroup(cg cgroup.ICgroup) error {
+	// 检查type是否已经存在
+	for _, v := range c.Config.Cgroups {
+		if v.Type() == cg.Type() {
+			return fmt.Errorf("cgroup type %s already exist", cg.Type())
+		}
+	}
+	c.Config.Cgroups = append(c.Config.Cgroups, cg)
+	return c.Config.Save()
 }

@@ -1,48 +1,60 @@
 package cgroup
 
 import (
+	"encoding/json"
+	"fmt"
 	"mini-container/common"
+	"mini-container/config"
 	"os"
+	"os/exec"
 	"path/filepath"
-	"strconv"
 )
+
+type CgroupType string
 
 const (
-	Cgroups = "/sys/fs/cgroup/"
+	CgroupCpu CgroupType = "cpu"
+	CgroupMem CgroupType = "memory"
 )
 
-func CreateCgroup(name string) error {
-	cgroupPath := filepath.Join(Cgroups, name)
-	err := os.Mkdir(cgroupPath, 0755)
+type ICgroup interface {
+	Type() CgroupType
+	ContainerName() string
+	Apply(childPID int) error
+	json.Marshaler
+	json.Unmarshaler
+}
+
+func Apply(cg ICgroup, childPID int) error {
+	if Applied(cg) {
+		return nil
+	}
+	return cg.Apply(childPID)
+}
+
+func Applied(cg ICgroup) bool {
+	return common.IsExistPath(CgroupPath(cg))
+}
+
+func Release(cg ICgroup) error {
+	return clearCgroup(cg.ContainerName(), cg.Type())
+}
+
+// CgroupPath format: /sys/fs/cgroup/[type]/[projName]/[containerName]
+func CgroupPath(cg ICgroup) string {
+	return filepath.Join(config.CgroupsDir, string(cg.Type()), config.ProjName, cg.ContainerName())
+}
+
+func createCgroup(name string) error {
+	cgroupPath := filepath.Join(config.CgroupsDir, name)
+	err := os.MkdirAll(cgroupPath, 0755)
 	return err
 }
 
-// DeleteCgroup 删除 cgroup, 但是只能删除空的 cgroup
-func DeleteCgroup(name string) error {
-	cgroupPath := filepath.Join(Cgroups, name)
-	err := os.Remove(cgroupPath)
-	return err
-}
-
-// DeleteCgroupForce 删除 cgroup, 但是可以删除非空的 cgroup
-func DeleteCgroupForce(name string) error {
-	cgroupPath := filepath.Join(Cgroups, name)
-	err := os.RemoveAll(cgroupPath)
-	return err
-}
-
-func cg() {
-
-	pids := filepath.Join(Cgroups, "pids")
-	common.Must(os.Mkdir(filepath.Join(pids, "lizrice"), 0755))
-	common.Must(os.WriteFile(filepath.Join(pids, "lizrice/pids.max"), []byte("20"), 0700))
-	common.Must(os.WriteFile(filepath.Join(pids, "lizrice/notify_on_release"), []byte("1"), 0700))
-	common.Must(os.WriteFile(filepath.Join(pids, "lizrice/cgroup.procs"), []byte(strconv.Itoa(os.Getpid())), 0700))
-
-	cpu := filepath.Join(Cgroups, "cpu")
-	common.Must(os.Mkdir(filepath.Join(cpu, "lizrice"), 0755))
-
-	common.Must(os.WriteFile(filepath.Join(cpu, "lizrice/cpu.cfs_quota_us"), []byte("50000"), 0700))
-	common.Must(os.WriteFile(filepath.Join(cpu, "lizrice/notify_on_release"), []byte("1"), 0700))
-	common.Must(os.WriteFile(filepath.Join(cpu, "lizrice/cgroup.procs"), []byte(strconv.Itoa(os.Getpid())), 0700))
+func clearCgroup(name string, cgroupType CgroupType) error {
+	output, err := exec.Command("cgdelete", "-r", fmt.Sprintf("%s:%s/%s", cgroupType, config.ProjName, name)).Output()
+	if err != nil {
+		return fmt.Errorf("clear %s cgroup fail 1 err=%s output=%s", cgroupType, err, string(output))
+	}
+	return os.RemoveAll(filepath.Join(config.CgroupsDir, string(cgroupType), config.ProjName, name))
 }

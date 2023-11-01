@@ -1,5 +1,10 @@
 package config
 
+const (
+	// ProjName 项目名
+	ProjName = "mini-container"
+)
+
 // Path
 const (
 	ConfigDir     = "/root/.mini-container"
@@ -14,6 +19,8 @@ const (
 	ContainerConfigDir = ConfigDir + "/config"
 
 	IPPoolPath = ConfigDir + "/ip-pool.json"
+
+	CgroupsDir = "/sys/fs/cgroup/"
 )
 
 // Network
