@@ -4,6 +4,9 @@
 
  **参考和致谢（含视频讲解）**：https://github.com/HobbyBear/tinydocker
 
+# 架构 / 目录层级
+![structure.png](assets%2Fstructure.png)
+
 # 核心知识点
 1. linux namespace 命名空间
 2. linux union fs 联合文件系统 
@@ -37,6 +40,17 @@
 4. ./mini-container clear
 5. ./mini-container start [container name]
 6. ./mini-container stop [container name]
+
+
+# 常见问题
+1. Q：如何使得容器支持域名解析？
+   
+    A：在容器中配置`/etc/resolv.conf`文件，增加：
+    ```bash
+      nameserver 8.8.8.8
+      nameserver 8.8.4.4
+    ```
+
 
 
 # Next
